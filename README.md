@@ -1,5 +1,8 @@
 # Prospection immobilière à Pully
 
+Voir [les critères de prospection](CRITERES_PROSPECTION.md) pour la synthèse de
+l'entretien avec l'expert, les exclusions souhaitées et les points à confirmer.
+
 Les données de terrain et la couche de pente à 2 m sont dans
 [`data/`](data/README.md), avec leur provenance et les références ISOS disponibles.
 Elles ne sont pas encore utilisées par le pipeline de présélection.
