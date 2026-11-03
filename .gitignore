@@ -1,5 +1,6 @@
 # Sorties générées locales (le CSV source est suivi par Git)
 /prototype_pully/resultats/
+/prototype_pully/resultats_classification/
 
 # Python et configuration locale de PyCharm
 __pycache__/

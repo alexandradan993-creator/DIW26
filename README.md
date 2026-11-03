@@ -1,5 +1,9 @@
 # Prospection immobilière à Pully
 
+**Nouvelle version :** [classification configurable à partir de 600 m²](prototype_pully/CLASSIFICATION.md).
+Elle distingue filtres connus, simulations COS et informations à vérifier,
+sans score ni critère énergétique. Le pipeline historique ci-dessous reste disponible.
+
 Les [pentes par parcelle](data/pentes_parcelles/README.md) sont calculées séparément,
 avec les alertes de qualité ; elles ne modifient pas encore la présélection.
 

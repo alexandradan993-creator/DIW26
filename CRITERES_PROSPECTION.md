@@ -1,5 +1,20 @@
 # Critères de prospection immobilière à Pully
 
+## Mise à jour après clarification avec l'expert
+
+La première classification configurable est décrite dans
+[`prototype_pully/CLASSIFICATION.md`](prototype_pully/CLASSIFICATION.md).
+Elle applique une surface minimale de **600 m² inclus** et l'exclusion
+patrimoniale 1–3, même provisoire. Les arbres centraux sont un axe majeur à
+documenter, sans exclusion automatique faute de règle et de données validées.
+La sous-exploitation est explorée via une simulation COS, sans droit à bâtir
+garanti. L'énergie est entièrement exclue ; la pente reste descriptive, sans
+pénalité. Aucun score global ni pondération n'est validé. Les critères et besoins
+géographiques futurs pourront être intégrés progressivement.
+
+Les anciennes hypothèses et seuils ci-dessous sont conservés comme contexte
+historique ; ils ne remplacent pas ces orientations actualisées.
+
 État des échanges au 3 novembre 2026. Document de cadrage issu de l'entretien
 avec l'expert, du travail du groupe et des décisions discutées ensuite.
 Il ne constitue pas une validation réglementaire. Sa rédaction ne modifie pas

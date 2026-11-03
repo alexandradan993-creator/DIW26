@@ -1,0 +1,15 @@
+{
+  "version": "prospection-600m2-v1",
+  "surface": {"actif": true, "minimum_m2": 600},
+  "patrimoine": {"actif": true},
+  "arbres": {"actif": true},
+  "cos": {
+    "actif": true,
+    "par_zone": {
+      "Zone de moyenne densité": {
+        "valeur": 0.2,
+        "source": "Entretien avec l'expert ; application réglementaire à vérifier"
+      }
+    }
+  }
+}
