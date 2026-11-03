@@ -1,0 +1,50 @@
+{
+  "date_calcul_utc": "2026-11-03T10:33:00.403239+00:00",
+  "parcelles_total": 2672,
+  "effectifs": {
+    "calcule": 2591,
+    "non_calculable": 20,
+    "calcule_a_verifier": 61
+  },
+  "alertes": {
+    "ecart_surface_superieur_1pct": 61,
+    "aucun_pixel_valide": 1,
+    "contour_absent_ou_invalide": 19,
+    "couverture_spatiale_partielle": 1,
+    "pixels_nodata": 1
+  },
+  "parcelle_607": {
+    "egrid": "CH384683457657",
+    "numero_parcelle": "607",
+    "genre_parcelle": "parcelle privée",
+    "statut_calcul": "calcule",
+    "ecart_surface_relatif": -0.00035651351922072423,
+    "couverture_emprise_raster_pct": 100.0,
+    "pixels_interieurs": 483,
+    "pixels_valides": 483,
+    "pixels_nodata": 0,
+    "part_pixels_valides_pct": 100.0,
+    "pente_moyenne_degres": 14.44574298455108,
+    "pente_mediane_degres": 12.863387107849121,
+    "pente_p90_degres": 27.30027122497559,
+    "pente_max_degres": 57.294063568115234,
+    "pente_moyenne_pct": 27.061362592454454,
+    "pente_mediane_pct": 22.835813744159186,
+    "pente_p90_pct": 51.614500765843836,
+    "pente_max_pct": 155.73051389552353,
+    "part_pixels_pente_inf_10pct": 20.910973084886127,
+    "part_pixels_pente_10_a_25pct": 33.33333333333333,
+    "part_pixels_pente_sup_25pct": 45.75569358178054,
+    "alertes_json": []
+  },
+  "sources_sha256": {
+    "pully_parcelles.csv": "a2904b9b1f48e5856f3062218b567872022bcff881990e8f3ae80bd3f010a364",
+    "data/parcelles/contours.geojson": "6f531296b3fb183b440bbecc364ad4f16f0ead6418b4522e7673307ecb72dec4",
+    "data/parcelles/audit_correspondances.json": "3482469a506ae685c0365f80a8cebd845784ccb1c8f3216ccffb290fc0a9a3d0",
+    "data/terrain/pente_degres_2m.tif": "1d72f996a21d82313d23e4e84d95d9c5aeb79fb525e592e76c8f7bb7e1b33bf0"
+  },
+  "resultat_sha256": "6891b0465a8aee838a9e4611ef1dfff3fc21f47873107050ff1f79b83483bece",
+  "methode": "Pixels de 2 m sélectionnés par rasterisation all_touched=False ; trous et NoData masqués. Statistiques sur les seuls pixels valides. Pas de pondération surfacique des pixels de bord.",
+  "unite": "Degrés et pourcentage de pente = 100*tan(angle). Parts des classes en pourcentage des pixels valides.",
+  "limites": "Les parts ne sont pas des surfaces constructibles. Données terrain 2019/2021, contours cartographiques. Aucun changement du classement de prospection."
+}

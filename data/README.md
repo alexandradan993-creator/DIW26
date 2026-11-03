@@ -1,5 +1,11 @@
 # Données géographiques autour de Pully
 
+## Pentes calculées par parcelle
+
+Voir [`pentes_parcelles/`](pentes_parcelles/README.md) pour les statistiques par
+EGRID, les unités, la couverture et les alertes. Ce calcul reste distinct du
+classement de prospection et ne crée aucun droit à bâtir.
+
 ## Contours parcellaires
 
 Voir [`parcelles/`](parcelles/README.md) : les 2 672 EGRID sont retrouvés dans

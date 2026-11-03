@@ -79,5 +79,6 @@ La source étant vivante, une nouvelle exécution peut produire des différences
 
 Les anneaux sources sont assemblés en préservant trous et parties disjointes,
 puis validés avant conversion en WGS84. Une géométrie invalide reste signalée.
-L'extraction ne calcule pas encore les pentes par parcelle, les reculs ou le
-potentiel et ne change aucun statut du pipeline.
+L'extraction ne calcule pas elle-même les pentes, les reculs ou le potentiel et
+ne change aucun statut du pipeline. Le calcul séparé des pentes est documenté
+dans [`../pentes_parcelles/`](../pentes_parcelles/README.md).

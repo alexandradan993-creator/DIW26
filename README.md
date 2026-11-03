@@ -1,5 +1,8 @@
 # Prospection immobilière à Pully
 
+Les [pentes par parcelle](data/pentes_parcelles/README.md) sont calculées séparément,
+avec les alertes de qualité ; elles ne modifient pas encore la présélection.
+
 Voir [les critères de prospection](CRITERES_PROSPECTION.md) pour la synthèse de
 l'entretien avec l'expert, les exclusions souhaitées et les points à confirmer.
 
