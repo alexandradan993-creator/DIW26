@@ -1,0 +1,105 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "4452",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.698710138072613,
+          46.50220431615816
+        ]
+      },
+      "properties": {
+        "id_isos": "4452",
+        "nom": "Châtelard (Lutry)",
+        "url": "https://www.gisos.bak.admin.ch/sites/4452",
+        "documents_pdf": [
+          "https://api.isos.bak.admin.ch/ob/4452/doc/ISOS_4452.pdf"
+        ],
+        "coordonnees_lv95": [
+          2543202.0,
+          1150368.0
+        ],
+        "type_geometrie_source": "point_de_localisation_non_perimetre",
+        "perimetres_numeriques_disponibles": false
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "4397",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.635274234441337,
+          46.52259856194545
+        ]
+      },
+      "properties": {
+        "id_isos": "4397",
+        "nom": "Lausanne",
+        "url": "https://www.gisos.bak.admin.ch/sites/4397",
+        "documents_pdf": [
+          "https://api.isos.bak.admin.ch/ob/4397/doc/ISOS_4397.pdf"
+        ],
+        "coordonnees_lv95": [
+          2538356.0,
+          1152683.0
+        ],
+        "type_geometrie_source": "point_de_localisation_non_perimetre",
+        "perimetres_numeriques_disponibles": false
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "4461",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.686158131954294,
+          46.50265248044731
+        ]
+      },
+      "properties": {
+        "id_isos": "4461",
+        "nom": "Lutry",
+        "url": "https://www.gisos.bak.admin.ch/sites/4461",
+        "documents_pdf": [
+          "https://api.isos.bak.admin.ch/ob/4461/doc/ISOS_4461.pdf"
+        ],
+        "coordonnees_lv95": [
+          2542239.0,
+          1150427.0
+        ],
+        "type_geometrie_source": "point_de_localisation_non_perimetre",
+        "perimetres_numeriques_disponibles": false
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "4469",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.692834879244181,
+          46.50690672445798
+        ]
+      },
+      "properties": {
+        "id_isos": "4469",
+        "nom": "Savuit (Lutry)",
+        "url": "https://www.gisos.bak.admin.ch/sites/4469",
+        "documents_pdf": [
+          "https://api.isos.bak.admin.ch/ob/4469/doc/ISOS_4469.pdf"
+        ],
+        "coordonnees_lv95": [
+          2542756.0,
+          1150895.0
+        ],
+        "type_geometrie_source": "point_de_localisation_non_perimetre",
+        "perimetres_numeriques_disponibles": false
+      }
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # Prospection immobilière à Pully
 
+Les données de terrain et la couche de pente à 2 m sont dans
+[`data/`](data/README.md), avec leur provenance et les références ISOS disponibles.
+Elles ne sont pas encore utilisées par le pipeline de présélection.
+
 Prototype Python de présélection explicable de parcelles, importé depuis
 `prototype_pully_python.zip`. Python 3.10 ou ultérieur suffit ; aucune dépendance
 externe ni connexion réseau n'est nécessaire.

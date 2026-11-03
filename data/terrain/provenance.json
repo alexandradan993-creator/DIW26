@@ -1,0 +1,59 @@
+{
+  "date_creation_utc": "2026-11-03T09:11:49.247848+00:00",
+  "source": "swissALTI3D © swisstopo",
+  "bbox_recherche_wgs84": [
+    6.64,
+    46.49,
+    6.7,
+    46.56
+  ],
+  "limites": "Rectangle de travail autour de Pully, pas une limite communale ou parcellaire. Couverture des 2672 parcelles non vérifiée sans leurs géométries.",
+  "selection": "Dernier millésime disponible par tuile dans la réponse STAC, résolution 2m, EPSG:2056, altitude LN02 (5728).",
+  "millesimes": [
+    2019,
+    2021
+  ],
+  "tuiles": 48,
+  "methode_pente": "Différences centrées à 2m sur la mosaïque, atan(hypot(dz/dx,dz/dy)) en degrés ; bord externe et voisinages NoData masqués. Pas de seuil de classement.",
+  "versions": {
+    "numpy": "2.5.4",
+    "rasterio": "1.5.2",
+    "pyproj": "3.8.0"
+  },
+  "fichiers": {
+    "altitude_2m.tif": {
+      "sha256": "347eb2b36e4a9f9002739eed3468fa2b9c4b007b8912cd33e6ea88a626a3c505",
+      "bytes": 19970223,
+      "bounds_lv95": [
+        2538000.0,
+        1149000.0,
+        2544000.0,
+        1157000.0
+      ],
+      "dimensions": [
+        3000,
+        4000
+      ],
+      "pixels_valides": 12000000,
+      "minimum": 371.15423583984375,
+      "maximum": 881.7765502929688
+    },
+    "pente_degres_2m.tif": {
+      "sha256": "1d72f996a21d82313d23e4e84d95d9c5aeb79fb525e592e76c8f7bb7e1b33bf0",
+      "bytes": 32640426,
+      "bounds_lv95": [
+        2538000.0,
+        1149000.0,
+        2544000.0,
+        1157000.0
+      ],
+      "dimensions": [
+        3000,
+        4000
+      ],
+      "pixels_valides": 11986004,
+      "minimum": 0.0,
+      "maximum": 82.11839294433594
+    }
+  }
+}

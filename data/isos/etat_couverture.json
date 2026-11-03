@@ -1,0 +1,66 @@
+{
+  "date_consultation_utc": "2026-11-03T09:11:26.415770+00:00",
+  "archive_source_sha256": "872de9db00bf3fe29bfe85b42b3f857ba2109cbbf41845d3ae6463f00b9d5501",
+  "archive_source_url": "https://data.geo.admin.ch/ch.bak.bundesinventar-schuetzenswerte-ortsbilder/bundesinventar-schuetzenswerte-ortsbilder/bundesinventar-schuetzenswerte-ortsbilder_2056.xtf.zip",
+  "entree_nommee_pully_trouvee": false,
+  "sites_voisins": [
+    {
+      "id_isos": "4452",
+      "nom": "Châtelard (Lutry)",
+      "url": "https://www.gisos.bak.admin.ch/sites/4452",
+      "documents_pdf": [
+        "https://api.isos.bak.admin.ch/ob/4452/doc/ISOS_4452.pdf"
+      ],
+      "coordonnees_lv95": [
+        2543202.0,
+        1150368.0
+      ],
+      "type_geometrie_source": "point_de_localisation_non_perimetre",
+      "perimetres_numeriques_disponibles": false
+    },
+    {
+      "id_isos": "4397",
+      "nom": "Lausanne",
+      "url": "https://www.gisos.bak.admin.ch/sites/4397",
+      "documents_pdf": [
+        "https://api.isos.bak.admin.ch/ob/4397/doc/ISOS_4397.pdf"
+      ],
+      "coordonnees_lv95": [
+        2538356.0,
+        1152683.0
+      ],
+      "type_geometrie_source": "point_de_localisation_non_perimetre",
+      "perimetres_numeriques_disponibles": false
+    },
+    {
+      "id_isos": "4461",
+      "nom": "Lutry",
+      "url": "https://www.gisos.bak.admin.ch/sites/4461",
+      "documents_pdf": [
+        "https://api.isos.bak.admin.ch/ob/4461/doc/ISOS_4461.pdf"
+      ],
+      "coordonnees_lv95": [
+        2542239.0,
+        1150427.0
+      ],
+      "type_geometrie_source": "point_de_localisation_non_perimetre",
+      "perimetres_numeriques_disponibles": false
+    },
+    {
+      "id_isos": "4469",
+      "nom": "Savuit (Lutry)",
+      "url": "https://www.gisos.bak.admin.ch/sites/4469",
+      "documents_pdf": [
+        "https://api.isos.bak.admin.ch/ob/4469/doc/ISOS_4469.pdf"
+      ],
+      "coordonnees_lv95": [
+        2542756.0,
+        1150895.0
+      ],
+      "type_geometrie_source": "point_de_localisation_non_perimetre",
+      "perimetres_numeriques_disponibles": false
+    }
+  ],
+  "perimetres_pully": "non_determines",
+  "avertissement": "Les points ne sont pas des périmètres. Aucun statut ISOS ne peut être attribué aux parcelles à partir de ces points. Consulter les PDF officiels et les sources cantonales."
+}
