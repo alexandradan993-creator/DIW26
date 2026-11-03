@@ -1,0 +1,227 @@
+{
+  "date_extraction_utc": "2026-11-03T10:23:28.089998+00:00",
+  "source": "https://api3.geo.admin.ch/rest/services/api/MapServer/ch.kantone.cadastralwebmap-farbe",
+  "source_csv_sha256": "a2904b9b1f48e5856f3062218b567872022bcff881990e8f3ae80bd3f010a364",
+  "parcelles_csv": 2672,
+  "contours_valides": 2653,
+  "requêtes": 285,
+  "non_apparies": [
+    {
+      "egrid": "CH744583746106",
+      "numero_parcelle": "DP 1089",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2539052.6 1151445.37142857]"
+    },
+    {
+      "egrid": "CH698374624503",
+      "numero_parcelle": "7393",
+      "genre_parcelle": "parcelle privée",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Ring Self-intersection[2540055.6 1151876.5]"
+    },
+    {
+      "egrid": "CH544583758745",
+      "numero_parcelle": "DP 37",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540145.37669903 1151632.81165049]"
+    },
+    {
+      "egrid": "CH174575958351",
+      "numero_parcelle": "DP 105",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540143.11578947 1151345.15263158]"
+    },
+    {
+      "egrid": "CH127612834566",
+      "numero_parcelle": "DP 5",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540140.33493151 1151305.72328767]"
+    },
+    {
+      "egrid": "CH367583458806",
+      "numero_parcelle": "7097",
+      "genre_parcelle": "parcelle privée",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540433.10209913 1152298.71407191]"
+    },
+    {
+      "egrid": "CH367483456160",
+      "numero_parcelle": "2211",
+      "genre_parcelle": "parcelle privée",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540278.6 1152252.86111111]"
+    },
+    {
+      "egrid": "CH138375454819",
+      "numero_parcelle": "DP 1018",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540345.576 1150884.892]"
+    },
+    {
+      "egrid": "CH767483456319",
+      "numero_parcelle": "DP 1163",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540191.27083333 1151899.6]"
+    },
+    {
+      "egrid": "CH827653834541",
+      "numero_parcelle": "DP 1212",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2539981 1151825]"
+    },
+    {
+      "egrid": "CH254483754538",
+      "numero_parcelle": "DP 1218",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540896.34166667 1150844.11944444]"
+    },
+    {
+      "egrid": "CH738375456985",
+      "numero_parcelle": "DP 46",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2541054.15306122 1151463.85306122]"
+    },
+    {
+      "egrid": "CH385183457619",
+      "numero_parcelle": "DP 1058",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2539493.48125 1151308.31875]"
+    },
+    {
+      "egrid": "CH355283764576",
+      "numero_parcelle": "1114",
+      "genre_parcelle": "parcelle privée",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2539917.4 1151845.82352941]"
+    },
+    {
+      "egrid": "CH714514837652",
+      "numero_parcelle": "DP 11",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540274.49651163 1151164.70348837]"
+    },
+    {
+      "egrid": "CH514557837624",
+      "numero_parcelle": "DP 1172",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540280.71060606 1152299.88939394]"
+    },
+    {
+      "egrid": "CH438376455397",
+      "numero_parcelle": "DP 1166",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2539966.2 1151901.553125]"
+    },
+    {
+      "egrid": "CH474575918358",
+      "numero_parcelle": "DP 33",
+      "genre_parcelle": "DP communal",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540073.41428571 1151537.65714286]"
+    },
+    {
+      "egrid": "CH814588837631",
+      "numero_parcelle": "445",
+      "genre_parcelle": "parcelle privée",
+      "nombre_objets": 1,
+      "statut": "geometrie_a_verifier",
+      "detail": "Self-intersection[2540556.89444444 1151359.79444444]"
+    }
+  ],
+  "numeros_divergents": [],
+  "ecarts_surface_superieurs_1pct": [
+    "CH514500830823",
+    "CH167583453134",
+    "CH514557830003",
+    "CH781683459929",
+    "CH338375453066",
+    "CH120057834564",
+    "CH482583459982",
+    "CH614542837529",
+    "CH298375444587",
+    "CH727541834516",
+    "CH807545058313",
+    "CH574575448368",
+    "CH238301453582",
+    "CH255383754586",
+    "CH227544834562",
+    "CH127651834506",
+    "CH457883754522",
+    "CH244583754394",
+    "CH727529834527",
+    "CH760083454892",
+    "CH474575448305",
+    "CH369983459629",
+    "CH814507837681",
+    "CH584783450731",
+    "CH260183458009",
+    "CH198375424530",
+    "CH756583754577",
+    "CH744583756004",
+    "CH107545428343",
+    "CH750283024557",
+    "CH627460834503",
+    "CH867583456553",
+    "CH498300284563",
+    "CH374508198338",
+    "CH507545448395",
+    "CH227549834517",
+    "CH783683457595",
+    "CH250083094566",
+    "CH598375844559",
+    "CH467583454416",
+    "CH927659834550",
+    "CH684383457537",
+    "CH438374456902",
+    "CH307545338302",
+    "CH227637834501",
+    "CH314556830872",
+    "CH938376458886",
+    "CH167683452909",
+    "CH214543837559",
+    "CH938375455432",
+    "CH588183457515",
+    "CH514544837545",
+    "CH167583454322",
+    "CH500845118363",
+    "CH584483457544",
+    "CH898374694511",
+    "CH898394674531",
+    "CH698375684573",
+    "CH207545448303",
+    "CH398374634505",
+    "CH200145818347"
+  ],
+  "limite": "Contours du service cartographique, non substituables à un extrait officiel. Aucun rapprochement approximatif ni réparation automatique."
+}

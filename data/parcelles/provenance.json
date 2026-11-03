@@ -1,0 +1,49 @@
+{
+  "source": "CadastralWebMap — Mensuration Officielle Suisse, cantons",
+  "actualite_affichee_service": "2026-11-02",
+  "versions": {
+    "shapely": "2.2.0",
+    "pyproj": "3.8.0"
+  },
+  "egrid_retrouves": 2672,
+  "contours_valides": 2653,
+  "contours_invalides": 19,
+  "ecarts_surface_superieurs_1pct": 61,
+  "verification_exacte_complementaire": {
+    "390": "Contour identique via find par EGRID et identify spatial ; cause de l’écart avec le CSV non déterminée.",
+    "7393": "Contour invalide également via find par EGRID."
+  },
+  "contours_valides_debordant_rectangle_terrain": [
+    "DP 5590"
+  ],
+  "fichiers": {
+    "README.md": {
+      "sha256": "52f348d70ad32657e0f457cf1f7e49afbf8852078eb1b81d588dc5a66aa14df3",
+      "bytes": 4569
+    },
+    "schema_service.json": {
+      "sha256": "ac3f38480bd9134d98d25be1d07b25d57e2f5a846e26cdb656db2f57cb9bf754",
+      "bytes": 1270
+    },
+    "resume.json": {
+      "sha256": "f289de048b9973dda09423d7498d38ad64d841fcb91a4175093360a7ddb2fbe7",
+      "bytes": 6739
+    },
+    "source_esri_lv95.json": {
+      "sha256": "1fbe50c503f2f9545826411972cc00f4def8e2e2da76dcb6740fa980aeea0123",
+      "bytes": 8202322
+    },
+    "metadata_service.html": {
+      "sha256": "c22097dd795abdad846e1b3d425236d8f7c764f7f03079a5e6218df2ab0d0a37",
+      "bytes": 1896
+    },
+    "contours.geojson": {
+      "sha256": "6f531296b3fb183b440bbecc364ad4f16f0ead6418b4522e7673307ecb72dec4",
+      "bytes": 9693694
+    },
+    "audit_correspondances.json": {
+      "sha256": "3482469a506ae685c0365f80a8cebd845784ccb1c8f3216ccffb290fc0a9a3d0",
+      "bytes": 1331145
+    }
+  }
+}

@@ -119,8 +119,10 @@ Référence de l'exécution sur 2 672 parcelles : 771 exclusions patrimoniales,
 - CSV principal de 2 672 parcelles : présent dans le dépôt.
 - Terrain swissALTI3D et pente calculée à 2 m : présents dans `data/terrain/`,
   sur un rectangle de travail de 6 × 8 km ; pas encore utilisés par le pipeline.
-- Contours des parcelles : à récupérer pour les croisements, les mesures de
-  forme, les pentes par parcelle et l'enveloppe après reculs.
+- Contours des parcelles : extraction exploratoire disponible dans
+  `data/parcelles/` (2 672 EGRID retrouvés, 2 653 contours valides). Les anomalies
+  géométriques et écarts de surface doivent être examinés avant les croisements,
+  les mesures de forme, les pentes par parcelle et l'enveloppe après reculs.
 - ISOS : références de sites voisins disponibles, périmètres et objectifs de
   sauvegarde à examiner. Aucune absence de protection n'est déduite des points.
 - Propriété communale, arbres, accès, pleine terre réglementaire et règles
@@ -148,7 +150,7 @@ statuts du script ne sont pas des labels d'entraînement.
 
 1. Valider les COS et leurs définitions dans les sources réglementaires.
 2. Délimiter avec l'expert les secteurs centre-ville et lac à éviter.
-3. Obtenir les contours parcellaires et les périmètres ISOS pertinents.
+3. Résoudre les anomalies des contours récupérés et obtenir les périmètres ISOS pertinents.
 4. Faire qualifier des exemples par l'expert, dont l'échantillon de 15 parcelles :
    approfondir, écarter ou attendre, avec scénario et motif.
 5. Fixer les seuils par scénario et le volume de dossiers qu'il souhaite examiner.

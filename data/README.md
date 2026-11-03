@@ -1,5 +1,11 @@
 # Données géographiques autour de Pully
 
+## Contours parcellaires
+
+Voir [`parcelles/`](parcelles/README.md) : les 2 672 EGRID sont retrouvés dans
+CadastralWebMap ; 2 653 contours valides sont exportés. Les 19 géométries invalides
+et les 61 écarts de surface supérieurs à 1 % sont documentés avant tout croisement.
+
 ## Terrain et pente disponibles
 
 - `terrain/altitude_2m.tif` : mosaïque du terrain nu swissALTI3D, altitude en mètres.
