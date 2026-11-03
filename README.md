@@ -1,5 +1,8 @@
 # Prospection immobilière à Pully
 
+Voir [les deux pourcentages et la forme](code/FORME_ET_POURCENTAGES.md) pour la
+marge COS et la part du terrain après retrait simulé de 6 m.
+
 **Nouvelle version :** [classification configurable à partir de 600 m²](code/CLASSIFICATION.md).
 Elle distingue filtres connus, simulations COS et informations à vérifier,
 sans score ni critère énergétique. Le pipeline historique ci-dessous reste disponible.

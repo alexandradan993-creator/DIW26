@@ -97,6 +97,35 @@ class ClassificationTests(unittest.TestCase):
             observations.write_text('egrid,arbre_central,source\nCH_TEST,oui,Visite\nCH_TEST,non,Visite\n')
             with self.assertRaises(ValueError):run(input_path,cfg,root/'out',observations)
 
+    def test_two_percentages_have_distinct_denominators(self):
+        form={'statut_forme':'calcule','retrait_m':'6','surface_apres_retrait_m2':'90',
+              'part_terrain_apres_retrait_pct':'15'}
+        r=analyse(self.row,self.config,form=form)
+        self.assertAlmostEqual(r['marge_emprise_cos_pct'],100*20/120)
+        self.assertEqual(r['part_terrain_apres_retrait_pct'],15)
+        self.assertEqual(r['plafond_emprise_cos_forme_simule_m2'],90)
+        self.assertEqual(r['ecart_apparent_cos_forme_m2'],-10)
+        self.assertEqual(r['statut_potentiel'],'non_etabli')
+
+    def test_percentage_zero_is_distinct_from_unknown(self):
+        self.row['emprise_batie_m2']='300'
+        self.assertEqual(analyse(self.row,self.config)['marge_emprise_cos_pct'],0)
+        self.row['zone_dominante']='Zone inconnue'
+        r=analyse(self.row,self.config)
+        self.assertIsNone(r['marge_emprise_cos_pct'])
+        self.assertIsNone(r['part_terrain_apres_retrait_pct'])
+
+    def test_mismatched_or_uncertain_geometry_not_used_for_combined_bound(self):
+        form={'statut_forme':'calcule_a_verifier','retrait_m':'6',
+              'surface_apres_retrait_m2':'90','part_terrain_apres_retrait_pct':'15'}
+        r=analyse(self.row,self.config,form=form)
+        self.assertEqual(r['part_terrain_apres_retrait_pct'],15)
+        self.assertIsNone(r['plafond_emprise_cos_forme_simule_m2'])
+        form['retrait_m']='5'
+        r=analyse(self.row,self.config,form=form)
+        self.assertEqual(r['forme_statut'],'donnees_incompatibles')
+        self.assertIsNone(r['part_terrain_apres_retrait_pct'])
+
 
 if __name__=='__main__':
     unittest.main()

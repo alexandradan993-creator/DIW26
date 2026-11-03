@@ -1,5 +1,8 @@
 # Classification configurable — première version à 600 m²
 
+**Évolution :** [deux pourcentages et effet de la forme](FORME_ET_POURCENTAGES.md).
+Le retrait uniforme de 6 m est une hypothèse configurable à confirmer.
+
 Cette version accompagne la prospection de l'expert immobilier. Elle produit
 une présélection expliquée et des vérifications, pas une certification de
 constructibilité ou une estimation de valeur. Elle complète le prototype

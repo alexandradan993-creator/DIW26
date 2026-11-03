@@ -1,0 +1,21 @@
+{
+  "date_calcul_utc": "2026-11-03T12:47:38.492015+00:00",
+  "hypothese": {
+    "actif": true,
+    "retrait_m": 6,
+    "source": "Hypothèse utilisateur : retrait de 6 m de chaque limite ; champ réglementaire à confirmer"
+  },
+  "parcelles": 2672,
+  "effectifs": {
+    "calcule": 2592,
+    "calcule_a_verifier": 61,
+    "non_calculable": 19
+  },
+  "enveloppes_vides": 530,
+  "sources_sha256": {
+    "data/parcelles/contours.geojson": "6f531296b3fb183b440bbecc364ad4f16f0ead6418b4522e7673307ecb72dec4",
+    "data/parcelles/audit_correspondances.json": "3482469a506ae685c0365f80a8cebd845784ccb1c8f3216ccffb290fc0a9a3d0",
+    "code/filtres.json": "f2172769f4687f549aaa07638260d30a634d40faf9f9277877a1860f60903b07"
+  },
+  "limite": "Simulation avec retrait uniforme, pas une règle réglementaire vérifiée. Pas de contrainte arbres, routes, eau, forêt ni de placement des bâtiments."
+}

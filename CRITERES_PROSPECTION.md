@@ -1,5 +1,12 @@
 # Critères de prospection immobilière à Pully
 
+## Précision : forme et pourcentages
+
+Deux indicateurs séparés sont maintenant calculés : part du terrain restant
+après retrait uniforme simulé de 6 m, et marge d'emprise par rapport au plafond
+COS simulé. Les 6 m sont une hypothèse utilisateur à confirmer dans les règlements,
+sans exclusion automatique. Voir [la méthode](code/FORME_ET_POURCENTAGES.md).
+
 ## Mise à jour après clarification avec l'expert
 
 La première classification configurable est décrite dans

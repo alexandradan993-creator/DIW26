@@ -22,7 +22,7 @@ def validate_config(config: dict) -> None:
     if not isinstance(config, dict):
         raise ValueError('Configuration attendue : objet JSON')
     allowed = {'version', 'surface', 'patrimoine', 'arbres', 'cos'}
-    if set(config) != allowed:
+    if set(config)-{'forme'} != allowed:
         raise ValueError('Clés de configuration attendues : '+', '.join(sorted(allowed)))
     if not isinstance(config['version'], str) or not config['version'].strip():
         raise ValueError('Version de configuration requise')
@@ -43,10 +43,18 @@ def validate_config(config: dict) -> None:
                 or not 0<rule['valeur']<=1 or not isinstance(rule['source'],str)
                 or not rule['source'].strip()):
             raise ValueError('COS et source invalides pour la zone : '+zone)
+    if 'forme' in config:
+        form=config['forme']
+        if (not isinstance(form,dict) or set(form)!={'actif','retrait_m','source'}
+                or type(form['actif']) is not bool
+                or type(form['retrait_m']) not in (int,float)
+                or not math.isfinite(form['retrait_m']) or form['retrait_m']<0
+                or not isinstance(form['source'],str) or not form['source'].strip()):
+            raise ValueError('Hypothèse de retrait invalide')
 
 
 def analyse(row: dict, config: dict, observation: dict | None = None,
-            slope: dict | None = None) -> dict:
+            slope: dict | None = None, form: dict | None = None) -> dict:
     exclusions, issues, remaining, signals = [], [], [], []
     surface=numeric(row.get('surface_geometrique_m2'))
     footprint=numeric(row.get('emprise_batie_m2'))
@@ -112,6 +120,30 @@ def analyse(row: dict, config: dict, observation: dict | None = None,
         cadastral_ratio=footprint/surface
     else:
         cadastral_ratio=None
+    # Deux dénominateurs distincts : terrain total d'un côté, plafond COS de l'autre.
+    cos_margin_pct=min(100.,100*max(0,gap)/maximum) if maximum is not None else None
+    form_percent, spatial_max, spatial_gap=None,None,None
+    form_state='desactive'
+    if config.get('forme',{}).get('actif',False):
+        form_state='a_calculer'
+        form=form or {}
+        if form.get('statut_forme') in ('calcule','calcule_a_verifier'):
+            distance=numeric(form.get('retrait_m'))
+            part=numeric(form.get('part_terrain_apres_retrait_pct'))
+            area=numeric(form.get('surface_apres_retrait_m2'))
+            if distance!=config['forme']['retrait_m'] or part is None or not 0<=part<=100 or area is None or area<0:
+                form_state='donnees_incompatibles'
+            else:
+                form_state=form['statut_forme']
+                form_percent=part
+                if maximum is not None and form_state=='calcule':
+                    spatial_max=min(maximum,area)
+                    spatial_gap=spatial_max-footprint
+        elif form.get('statut_forme')=='non_calculable':
+            form_state='non_calculable'
+        remaining.append('Retrait uniforme de '+str(config['forme']['retrait_m'])+' m : hypothèse à confirmer par zone ; arbres, pleine terre et autres reculs non intégrés')
+        if form_state!='calcule':
+            remaining.append('Forme et retraits : '+form_state+' ; consulter les alertes géométriques')
     # Ne pas transformer une mesure de pente ou une information manquante en exclusion.
     remaining.extend([
         'Périmètres ISOS, affectation et règles applicables à vérifier',
@@ -133,6 +165,11 @@ def analyse(row: dict, config: dict, observation: dict | None = None,
         cos_simulation=cos,cos_source=rule['source'] if rule else None,
         emprise_theorique_simulee_m2=maximum,ecart_apparent_simule_m2=gap,
         ratio_emprise_sur_maximum_simule=ratio,
+        marge_emprise_cos_pct=cos_margin_pct,
+        part_terrain_apres_retrait_pct=form_percent,
+        forme_statut=form_state,forme_information_json=form or {},
+        plafond_emprise_cos_forme_simule_m2=spatial_max,
+        ecart_apparent_cos_forme_m2=spatial_gap,
         pente_information_json=slope or {},decision_expert=row.get('decision_conti',''),
         logements_rattachement_declare=dwellings,logements_objets_renseignes=known,
         logements_objets_total=matched,anomalies_bati_json=building_issues,
@@ -154,25 +191,30 @@ def index_csv(path: Path | None, expected: set[str], required: set[str]) -> dict
 
 
 def run(input_path: Path, config_path: Path, output: Path,
-        observations: Path | None = None, slopes: Path | None = None) -> dict:
+        observations: Path | None = None, slopes: Path | None = None,
+        forms: Path | None = None) -> dict:
     config=json.loads(config_path.read_text(encoding='utf-8-sig'))
     validate_config(config)
     rows=load_rows(input_path)
     expected={r['egrid'] for r in rows}
     trees=index_csv(observations,expected,{'egrid','arbre_central','source'})
     slope_index=index_csv(slopes,expected,{'egrid','statut_calcul','alertes_json'})
-    results=[analyse(row,config,trees.get(row['egrid']),slope_index.get(row['egrid'])) for row in rows]
+    form_index=index_csv(forms,expected,{'egrid','statut_forme','retrait_m','surface_apres_retrait_m2','part_terrain_apres_retrait_pct'})
+    results=[analyse(row,config,trees.get(row['egrid']),slope_index.get(row['egrid']),form_index.get(row['egrid'])) for row in rows]
     counts=Counter(r['statut_filtrage'] for r in results)
     files=['classification.csv','retenues_a_examiner.csv','resume.json']
-    inputs=[p.resolve() for p in [input_path,config_path,observations,slopes] if p]
+    inputs=[p.resolve() for p in [input_path,config_path,observations,slopes,forms] if p]
     if any((output/f).resolve() in inputs for f in files):
         raise ValueError('La sortie écraserait un fichier d’entrée')
     summary=dict(date_execution_utc=datetime.now(timezone.utc).isoformat(),
                  criteres=config,parcelles_total=len(results),effectifs=dict(counts),
                  simulations_cos=sum(r['cos_simulation'] is not None for r in results),
+                 pourcentages_cos=sum(r['marge_emprise_cos_pct'] is not None for r in results),
+                 pourcentages_forme=sum(r['part_terrain_apres_retrait_pct'] is not None for r in results),
+                 formes=dict(Counter(r['forme_statut'] for r in results)),
                  arbres=dict(Counter(r['arbre_central_statut'] for r in results)),
                  sources_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in
-                                 [input_path,config_path,observations,slopes] if p},
+                                 [input_path,config_path,observations,slopes,forms] if p},
                  limite='Retenue signifie uniquement passage des filtres connus activés. Potentiel non établi, données et réglementation à compléter. Aucun score ni critère énergétique.')
     output.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(dir=output) as temp:
@@ -196,9 +238,10 @@ def main():
     parser.add_argument('--output',type=Path,default=Path('code/resultats_classification'))
     parser.add_argument('--observations-arbres',type=Path)
     parser.add_argument('--pentes',type=Path)
+    parser.add_argument('--formes',type=Path)
     args=parser.parse_args()
     try:
-        summary=run(args.input,args.config,args.output,args.observations_arbres,args.pentes)
+        summary=run(args.input,args.config,args.output,args.observations_arbres,args.pentes,args.formes)
     except (OSError,ValueError,TypeError) as error:
         parser.exit(2,'Erreur : '+str(error)+'\n')
     print(json.dumps(summary,ensure_ascii=False,indent=2))
