@@ -1,5 +1,11 @@
 # Premier pipeline Python de prospection à Pully
 
+**Document historique : ce README décrit `prospection.py`, avec son ancien seuil
+de 1 000 m². La version actuelle utilise 600 m² inclus**, après discussion avec
+l'expert. Utiliser [`CLASSIFICATION.md`](CLASSIFICATION.md), `classification.py`
+et `filtres.json` pour la classification actuelle. Les seuils de 20 % d'emprise
+et trois logements ci-dessous sont également historiques.
+
 Python 3.10 ou ultérieur. Le programme fonctionne hors ligne avec la bibliothèque standard.
 
 ## Lancer

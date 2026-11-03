@@ -3,9 +3,11 @@
 Voir [les deux pourcentages et la forme](code/FORME_ET_POURCENTAGES.md) pour la
 marge COS et la part du terrain après retrait simulé de 6 m.
 
-**Nouvelle version :** [classification configurable à partir de 600 m²](code/CLASSIFICATION.md).
+**Seuil actuel validé avec l'expert : 600 m² minimum, borne incluse.**
+La [classification configurable](code/CLASSIFICATION.md) utilise `code/filtres.json`.
 Elle distingue filtres connus, simulations COS et informations à vérifier,
-sans score ni critère énergétique. Le pipeline historique ci-dessous reste disponible.
+sans score ni critère énergétique. Les 1 000 m² de l'ancien prototype sont
+uniquement historiques et ne sont pas le seuil de cette classification.
 
 Les [pentes par parcelle](data/pentes_parcelles/README.md) sont calculées séparément,
 avec les alertes de qualité ; elles ne modifient pas encore la présélection.
@@ -15,7 +17,7 @@ l'entretien avec l'expert, les exclusions souhaitées et les points à confirmer
 
 Les données de terrain et la couche de pente à 2 m sont dans
 [`data/`](data/README.md), avec leur provenance et les références ISOS disponibles.
-Elles ne sont pas encore utilisées par le pipeline de présélection.
+Les statistiques de pente sont jointes à titre descriptif ; elles ne filtrent pas.
 
 Prototype Python de présélection explicable de parcelles, importé depuis
 `prototype_pully_python.zip`. Python 3.10 ou ultérieur suffit ; aucune dépendance
@@ -32,7 +34,7 @@ Les sorties fournies dans l'archive servent de référence,
 les sorties locales ci-dessous sont recalculées par le script.
 
 ```bash
-python code/prospection.py --input pully_parcelles.csv --output code/resultats --config code/criteres.json
+python code/classification.py --input pully_parcelles.csv --config code/filtres.json --pentes data/pentes_parcelles/pentes_parcelles.csv --formes data/formes_parcelles/formes_parcelles.csv --output code/resultats_classification
 ```
 
 Sur un système où Python s'appelle `python3`, remplacer `python` par `python3`.
@@ -44,8 +46,8 @@ Ouvrir le dossier `DIW26` comme projet et sélectionner un interpréteur Python
 3.10 ou ultérieur (un environnement virtuel local est facultatif).
 Dans une configuration **Python**, renseigner :
 
-- Script : `$PROJECT_DIR$/code/prospection.py`
-- Paramètres : `--input pully_parcelles.csv --output code/resultats --config code/criteres.json`
+- Script : `$PROJECT_DIR$/code/classification.py`
+- Paramètres : `--input pully_parcelles.csv --config code/filtres.json --pentes data/pentes_parcelles/pentes_parcelles.csv --formes data/formes_parcelles/formes_parcelles.csv --output code/resultats_classification`
 - Répertoire de travail : `$PROJECT_DIR$`
 
 La commande précédente fonctionne aussi dans le terminal PyCharm ouvert à la racine.
@@ -58,24 +60,33 @@ Depuis la racine :
 python -m unittest discover -s code -p "test_*.py" -v
 ```
 
-Ouvrir dans `code/resultats/` :
+Ouvrir dans `code/resultats_classification/` :
 
 - `resume.json` : effectifs, seuils et empreinte SHA-256 de la source ;
-- `audit_parcelles.csv` : toutes les parcelles, notamment la parcelle 607 ;
-- `candidates_a_approfondir.csv` : candidates et explications ;
-- `anomalies_a_verifier.csv` : dossiers nécessitant une clarification ;
-- `exclusions_patrimoine.csv` : exclusions patrimoniales ;
-- `hors_cible_exploratoire.csv` : parcelles hors des seuils actuels.
+- `classification.csv` : toutes les parcelles avec statuts, motifs et inconnues ;
+- `retenues_a_examiner.csv` : celles qui satisfont les filtres connus activés,
+  sans potentiel constructible établi.
 
 Les colonnes terminées par `_json` contiennent des listes de preuves, motifs ou
-vérifications. Les seuils exploratoires restent dans `code/criteres.json` :
-1 000 m² minimum, 20 % d'emprise cadastrale maximum et trois logements maximum.
-Une note patrimoniale 1, 2 ou 3, même provisoire, reste prioritaire.
+vérifications. La configuration actuelle est `code/filtres.json` : **600 m² inclus**
+et exclusion patrimoniale 1, 2 ou 3, même provisoire. Le COS et le retrait de 6 m
+restent des simulations à confirmer ; aucun score global n'est appliqué.
+
+## Prototype historique à 1 000 m² — référence uniquement
+
+`code/prospection.py` et `code/criteres.json` conservent l'ancienne configuration
+(1 000 m², 20 % d'emprise, trois logements). Ces seuils ne s'appliquent pas à la
+classification actuelle. Pour reproduire exclusivement cette référence :
+
+```bash
+python code/prospection.py --input pully_parcelles.csv --output code/resultats --config code/criteres.json
+```
 
 Voir [la documentation du prototype](code/README.md) pour les règles
 et limites détaillées. La revue documentaire des 15 parcelles n'est pas une
 validation commerciale de Conti. Les statuts calculés ne sont pas des labels
 d'entraînement ; les décisions humaines restent distinctes.
 
-ISOS, pente, accès, enveloppe après retraits et règles des plans spéciaux restent
-à intégrer. L'emprise cadastrale ne remplace pas l'emprise réglementaire.
+ISOS, propriété communale, arbres, accès et réglementation détaillée restent à
+compléter. Les pentes et enveloppes simulées sont déjà calculées séparément.
+L'emprise cadastrale ne remplace pas l'emprise réglementaire.
