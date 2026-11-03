@@ -10,7 +10,7 @@ historique `prospection.py`, conservé sans changement.
 Python 3.10 ou ultérieur, bibliothèque standard uniquement :
 
 ```bash
-python prototype_pully/classification.py --input pully_parcelles.csv --config prototype_pully/filtres.json --pentes data/pentes_parcelles/pentes_parcelles.csv --output prototype_pully/resultats_classification
+python code/classification.py --input pully_parcelles.csv --config code/filtres.json --pentes data/pentes_parcelles/pentes_parcelles.csv --output code/resultats_classification
 ```
 
 Ouvrir les fichiers locaux produits :
@@ -113,7 +113,7 @@ Le modèle livré est vide ; aucun relevé d'arbres n'a été inventé.
 ## Vérifier
 
 ```bash
-python -m unittest discover -s prototype_pully -p "test_*.py" -v
+python -m unittest discover -s code -p "test_*.py" -v
 ```
 
 Les tests couvrent la borne de 600 m², les notes provisoires et inconnues, les

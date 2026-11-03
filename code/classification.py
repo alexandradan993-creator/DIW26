@@ -193,7 +193,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input',type=Path,required=True)
     parser.add_argument('--config',type=Path,required=True)
-    parser.add_argument('--output',type=Path,default=Path('prototype_pully/resultats_classification'))
+    parser.add_argument('--output',type=Path,default=Path('code/resultats_classification'))
     parser.add_argument('--observations-arbres',type=Path)
     parser.add_argument('--pentes',type=Path)
     args=parser.parse_args()

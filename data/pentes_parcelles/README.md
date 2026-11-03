@@ -104,5 +104,5 @@ unités, les NoData, les trous, la couverture partielle et les parcelles sans pi
 Les huit tests métier restent exécutables séparément :
 
 ```bash
-python -m unittest discover -s prototype_pully -p "test_*.py" -v
+python -m unittest discover -s code -p "test_*.py" -v
 ```

@@ -3,7 +3,7 @@
 ## Mise à jour après clarification avec l'expert
 
 La première classification configurable est décrite dans
-[`prototype_pully/CLASSIFICATION.md`](prototype_pully/CLASSIFICATION.md).
+[`code/CLASSIFICATION.md`](code/CLASSIFICATION.md).
 Elle applique une surface minimale de **600 m² inclus** et l'exclusion
 patrimoniale 1–3, même provisoire. Les arbres centraux sont un axe majeur à
 documenter, sans exclusion automatique faute de règle et de données validées.

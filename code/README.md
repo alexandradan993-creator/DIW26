@@ -4,7 +4,7 @@ Python 3.10 ou ultérieur. Le programme fonctionne hors ligne avec la bibliothè
 
 ## Lancer
 
-Depuis le dossier `prototype_pully`, avec le fichier principal déjà extrait dans le dossier parent.
+Depuis le dossier `code`, avec le fichier principal déjà extrait dans le dossier parent.
 
 ```bash
 python prospection.py --input ../pully_parcelles.csv --output resultats --config criteres.json

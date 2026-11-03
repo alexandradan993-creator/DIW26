@@ -1,6 +1,6 @@
 # Prospection immobilière à Pully
 
-**Nouvelle version :** [classification configurable à partir de 600 m²](prototype_pully/CLASSIFICATION.md).
+**Nouvelle version :** [classification configurable à partir de 600 m²](code/CLASSIFICATION.md).
 Elle distingue filtres connus, simulations COS et informations à vérifier,
 sans score ni critère énergétique. Le pipeline historique ci-dessous reste disponible.
 
@@ -29,7 +29,7 @@ Les sorties fournies dans l'archive servent de référence,
 les sorties locales ci-dessous sont recalculées par le script.
 
 ```bash
-python prototype_pully/prospection.py --input pully_parcelles.csv --output prototype_pully/resultats --config prototype_pully/criteres.json
+python code/prospection.py --input pully_parcelles.csv --output code/resultats --config code/criteres.json
 ```
 
 Sur un système où Python s'appelle `python3`, remplacer `python` par `python3`.
@@ -41,8 +41,8 @@ Ouvrir le dossier `DIW26` comme projet et sélectionner un interpréteur Python
 3.10 ou ultérieur (un environnement virtuel local est facultatif).
 Dans une configuration **Python**, renseigner :
 
-- Script : `$PROJECT_DIR$/prototype_pully/prospection.py`
-- Paramètres : `--input pully_parcelles.csv --output prototype_pully/resultats --config prototype_pully/criteres.json`
+- Script : `$PROJECT_DIR$/code/prospection.py`
+- Paramètres : `--input pully_parcelles.csv --output code/resultats --config code/criteres.json`
 - Répertoire de travail : `$PROJECT_DIR$`
 
 La commande précédente fonctionne aussi dans le terminal PyCharm ouvert à la racine.
@@ -52,10 +52,10 @@ La commande précédente fonctionne aussi dans le terminal PyCharm ouvert à la 
 Depuis la racine :
 
 ```bash
-python -m unittest discover -s prototype_pully -p "test_*.py" -v
+python -m unittest discover -s code -p "test_*.py" -v
 ```
 
-Ouvrir dans `prototype_pully/resultats/` :
+Ouvrir dans `code/resultats/` :
 
 - `resume.json` : effectifs, seuils et empreinte SHA-256 de la source ;
 - `audit_parcelles.csv` : toutes les parcelles, notamment la parcelle 607 ;
@@ -65,11 +65,11 @@ Ouvrir dans `prototype_pully/resultats/` :
 - `hors_cible_exploratoire.csv` : parcelles hors des seuils actuels.
 
 Les colonnes terminées par `_json` contiennent des listes de preuves, motifs ou
-vérifications. Les seuils exploratoires restent dans `prototype_pully/criteres.json` :
+vérifications. Les seuils exploratoires restent dans `code/criteres.json` :
 1 000 m² minimum, 20 % d'emprise cadastrale maximum et trois logements maximum.
 Une note patrimoniale 1, 2 ou 3, même provisoire, reste prioritaire.
 
-Voir [la documentation du prototype](prototype_pully/README.md) pour les règles
+Voir [la documentation du prototype](code/README.md) pour les règles
 et limites détaillées. La revue documentaire des 15 parcelles n'est pas une
 validation commerciale de Conti. Les statuts calculés ne sont pas des labels
 d'entraînement ; les décisions humaines restent distinctes.
