@@ -1,5 +1,4 @@
-# Données sources et sorties locales
-/pully_parcelles.csv
+# Sorties générées locales (le CSV source est suivi par Git)
 /prototype_pully/resultats/
 
 # Python et configuration locale de PyCharm

@@ -9,9 +9,9 @@ restantes. Il ne certifie pas la constructibilité et n'estime pas la valeur.
 
 ## Relancer depuis la racine du dépôt
 
-Placer le CSV complet de 2 672 parcelles dans `pully_parcelles.csv`.
-Le CSV et les résultats sont locaux et ignorés par Git ; les recopier séparément
-sur une nouvelle machine. Les sorties fournies dans l'archive servent de référence,
+Le CSV complet de 2 672 parcelles est inclus dans le dépôt : `pully_parcelles.csv`.
+Les résultats générés restent locaux et ignorés par Git.
+Les sorties fournies dans l'archive servent de référence,
 les sorties locales ci-dessous sont recalculées par le script.
 
 ```bash
