@@ -26,8 +26,5 @@
     "penalite_isos": true,
     "exclure_dangers_naturels": true,
     "exclure_acces_complique": true
-  },
-  "echeance_energetique": {
-    "annee_opportunite_avant": 1990
   }
 }
