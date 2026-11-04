@@ -1,0 +1,50 @@
+{
+  "date_execution_utc": "2026-11-04T13:20:41.252846+00:00",
+  "criteres": {
+    "version": "prospection-600m2-forme-v2",
+    "forme": {
+      "actif": true,
+      "retrait_m": 6,
+      "source": "Hypothèse utilisateur : retrait de 6 m de chaque limite ; champ réglementaire à confirmer"
+    },
+    "surface": {
+      "actif": true,
+      "minimum_m2": 600
+    },
+    "patrimoine": {
+      "actif": true
+    },
+    "arbres": {
+      "actif": true
+    },
+    "cos": {
+      "actif": true,
+      "par_zone": {
+        "Zone de moyenne densité": {
+          "valeur": 0.2,
+          "source": "Entretien avec l'expert ; application réglementaire à vérifier"
+        }
+      }
+    }
+  },
+  "parcelles_total": 2672,
+  "effectifs": {
+    "exclue_cible": 1345,
+    "retenue_filtres_connus": 1201,
+    "a_verifier_filtres": 126
+  },
+  "simulations_cos": 681,
+  "pourcentages_cos": 681,
+  "pourcentages_forme": 0,
+  "formes": {
+    "a_calculer": 2672
+  },
+  "arbres": {
+    "inconnu": 2672
+  },
+  "sources_sha256": {
+    "/Users/marcopeduto/Downloads/DIW26/pully_parcelles.csv": "a2904b9b1f48e5856f3062218b567872022bcff881990e8f3ae80bd3f010a364",
+    "/Users/marcopeduto/Downloads/DIW26/code/filtres.json": "f2172769f4687f549aaa07638260d30a634d40faf9f9277877a1860f60903b07"
+  },
+  "limite": "Retenue signifie uniquement passage des filtres connus activés. Potentiel non établi, données et réglementation à compléter. Aucun score ni critère énergétique."
+}

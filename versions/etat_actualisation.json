@@ -1,0 +1,78 @@
+{
+  "statut": "erreur",
+  "etape": "Calcul des attributs",
+  "debut_utc": "2026-11-04T13:40:10+00:00",
+  "fin_utc": "2026-11-04T13:41:34+00:00",
+  "fichier": null,
+  "sources": {
+    "batiments": {
+      "objets": 14791,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "zones_affectation": {
+      "objets": 2306,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "adresses": {
+      "objets": 13209,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_pully_recensement_provisoire_batiments": {
+      "objets": 679,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_pully_recensement_provisoire_sites": {
+      "objets": 217,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_rec_arch_s": {
+      "objets": 2390,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_rec_arch_p": {
+      "objets": 109,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_rec_arch_site": {
+      "objets": 162,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_zone_reservee": {
+      "objets": 133,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_pga_zones_affectation": {
+      "objets": 221,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_surfaces_vertes": {
+      "objets": 4107,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_surfaces_dures": {
+      "objets": 5225,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_forets": {
+      "objets": 448,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_eaux": {
+      "objets": 220,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_rcb_bat": {
+      "objets": 12742,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    },
+    "sigip_jardins_historiques": {
+      "objets": 41,
+      "verifie_utc": "2026-11-04T13:41:34+00:00"
+    }
+  },
+  "alertes": [
+    "zones_affectation : champs absents de la source, laissés vides : ['REMARQUES_GEO', 'REMARQUES_TYPE', 'SHAPE.LEN', 'SHAPE.AREA']"
+  ],
+  "bilan": null,
+  "erreur": "Mise à jour non appliquée — vérification nécessaire. unsupported operand type(s) for +: 'int' and 'str'"
+}
