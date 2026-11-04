@@ -1,8 +1,3 @@
-"""Statistiques exploratoires de pente par EGRID, sans modifier la prospection.
-
-Depuis la racine : python scripts/calculer_pentes_parcelles.py
-Dépendances : requirements-geo.txt et requirements-parcelles.txt.
-"""
 import csv
 import hashlib
 import json
@@ -15,14 +10,12 @@ import rasterio
 from rasterio.features import geometry_mask, geometry_window
 from rasterio.errors import WindowError
 from shapely.geometry import box, mapping, shape
-from shapely import transform
+from shapely.ops import transform
 from pyproj import Transformer
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
 def statistics(dataset, polygon):
-    """Échantillonne les pixels dans le polygone ; masque les trous et NoData."""
     extent = box(*dataset.bounds)
     coverage = min(100.0, 100 * polygon.intersection(extent).area / polygon.area)
     result = dict(couverture_emprise_raster_pct=coverage, pixels_interieurs=0,
@@ -61,7 +54,6 @@ def statistics(dataset, polygon):
             'pente_p90_'+suffix:float(np.percentile(samples,90)),
             'pente_max_'+suffix:float(np.max(samples)),
         })
-    # Comparer en degrés évite un classement instable à la frontière des seuils.
     low = degrees < np.degrees(np.arctan(0.10))
     high = degrees > np.degrees(np.arctan(0.25))
     result.update(part_pixels_pente_inf_10pct=100*float(np.mean(low)),
@@ -102,11 +94,12 @@ def main():
             if audit['statut']!='apparie' or egrid not in geometries:
                 flags.append('contour_absent_ou_invalide')
             else:
-                polygon = transform(shape(geometries[egrid]),converter,interleaved=False)
+                polygon = transform(converter, shape(geometries[egrid]))
                 if not polygon.is_valid or polygon.is_empty or polygon.area<=0:
-                    raise ValueError('Contour exporté invalide : '+egrid)
-                stats = statistics(raster,polygon)
-                result.update(stats)
+                    flags.append('contour_absent_ou_invalide')
+                else:
+                    stats = statistics(raster, polygon)
+                    result.update(stats)
                 if abs(audit.get('ecart_surface_relatif') or 0)>0.01:
                     flags.append('ecart_surface_superieur_1pct')
                 if stats['couverture_emprise_raster_pct']<99.999999:
@@ -141,7 +134,6 @@ def main():
                   limites='Les parts ne sont pas des surfaces constructibles. Données terrain 2019/2021, contours cartographiques. Aucun changement du classement de prospection.')
     (out/'resume.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps(report,ensure_ascii=False,indent=2))
-
 
 if __name__=='__main__':
     main()
