@@ -17,6 +17,7 @@ import argparse
 import csv
 import json
 import math
+import unicodedata
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -136,6 +137,36 @@ def _heritage_blocked(row: dict, notes: list[int]) -> bool | None:
     return False if known else None
 
 
+# Zoning is a fixed eliminatory rule (not a configurable score).
+# Only these three zoning designations are eligible, irrespective of accents or case.
+ALLOWED_ZONES = {
+    "zone de faible densite",
+    "zone de moyenne densite",
+    "zone de villas",
+}
+
+
+def normalized_zone(raw: Any) -> str | None:
+    """Normalize zoning labels without conflating distinct zoning categories."""
+    if raw is None or not str(raw).strip():
+        return None
+    label = unicodedata.normalize("NFKD", str(raw).strip().casefold())
+    label = "".join(char for char in label if not unicodedata.combining(char))
+    label = " ".join(label.split())
+    return label
+
+
+def eligible_zone(row: dict) -> bool | None:
+    """Check the parcel's dominant zone; unknown is not a confirmed exclusion.
+
+    Do not fall back to a minor intersecting zone: the eligible category must be
+    the parcel's dominant zone. This prevents a forest/industrial parcel from
+    qualifying merely because it overlaps a small residential area.
+    """
+    label = normalized_zone(pick(row, "zone_dominante"))
+    return None if label is None else label in ALLOWED_ZONES
+
+
 def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict:
     """Evaluate a cadastral row and optional slope row against *all* JSON criteria.
 
@@ -150,6 +181,15 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
             mandatory: bool = False, detail: str = "") -> None:
         checks[key] = dict(label=label, valeur=actual, seuil=threshold, etat=state,
                            obligatoire=mandatory, detail=detail)
+
+    zoning = eligible_zone(row)
+    add(
+        "zonage_residentiel", "Zone autorisée (faible densité, moyenne densité, villas)",
+        pick(row, "zone_dominante"), sorted(ALLOWED_ZONES),
+        "inconnu" if zoning is None else "ok" if zoning else "echec",
+        True,
+        "Toute autre zone dominante est éliminatoire (rouge).",
+    )
 
     def minimum(key: str, label: str, value: float | None, threshold: float, mandatory: bool = True):
         add(key, label, value, threshold, "inconnu" if value is None else "ok" if value >= threshold else "echec", mandatory)
@@ -252,7 +292,7 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
         "egrid": row.get("egrid", ""), "numero_parcelle": row.get("numero_parcelle", ""),
         "statut_filtrage_criteres": status, "filtres": checks,
         "filtres_echoues": failed, "filtres_inconnus": unknown, "alertes": alerts,
-        "surface_m2": area, "emprise_ratio": coverage, "pleine_terre_pct": earth_pct,
+        "zone_dominante": pick(row, "zone_dominante"), "surface_m2": area, "emprise_ratio": coverage, "pleine_terre_pct": earth_pct,
         "ratio_rd": ratio, "pente_mediane_pct": slope,
     }
 
@@ -275,7 +315,7 @@ def run(input_csv: Path = DEFAULT_DATA, config: Path = DEFAULT_CONFIG,
             raise ValueError("La sortie ne peut pas écraser une entrée")
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8-sig", newline="") as f:
-            fields = ["egrid", "numero_parcelle", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"]
+            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"]
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
             for r in results:
@@ -295,3 +335,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
