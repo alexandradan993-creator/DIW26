@@ -84,22 +84,63 @@ Les URL et numéros de couche sont regroupés en haut du script.
 - La zone dominante est celle qui a la plus grande intersection. Les agrégats RCB sont des sommes
   (logements, plancher) ou des maximums (niveaux, année).
 
-## Points encore incertains
+## Problèmes actuels (état au 4 novembre 2026)
 
-La base actuelle a été produite par Codex sans laisser son script. Ces points n'ont pas pu
-être confirmés et apparaîtront dans le rapport de comparaison s'ils diffèrent :
+### 1. Pas encore testé contre les vrais sites
 
-1. **`surface_mo_m2`** : la source exacte n'a pas été trouvée. Si la couche parcelles ne fournit
-   pas de surface MO, le script utilise la surface géométrique arrondie, qui correspond
-   dans 89 % des cas.
-2. **Zones d'affectation** : la base actuelle contient 4 champs que la couche publique 36 n'a pas
-   (`REMARQUES_GEO`, `REMARQUES_TYPE`, `SHAPE.AREA`, `SHAPE.LEN`). Les deux derniers sont
-   recalculés, les deux premiers restent vides.
-3. **Adresses** : le script prend `vd.adresse`. La base a peut-être utilisé `pully_adresses` (SIGIP).
-4. **Accès SIGIP** : le catalogue ASIT-VD indique un service réservé à la commune et à ses
-   mandataires pour certaines données. `--diagnostic` montre immédiatement quelles couches répondent.
-5. **L'ordre des objets** dans les listes JSON n'est pas reproductible. La comparaison n'en tient
-   pas compte, sauf pour les notes.
+Le script a été écrit dans un environnement qui ne pouvait pas joindre GEO.vd ni SIGIP.
+Seules les règles de calcul et le format d'écriture sont testés, hors ligne, contre la base
+actuelle (`test_actualiser_pully.py` : tout passe). La récupération des données,
+la lecture du WFS SIGIP et des réponses GEO.vd, les géométries et les intersections
+**n'ont jamais tourné**. Première étape : `python actualiser_pully.py --diagnostic`.
 
-Après le premier lancement réel, lire `…_comparaison.json`. Si une colonne diffère
-pour presque toutes les parcelles, c'est une règle ou une source à ajuster, pas un vrai changement.
+### 2. Script d'origine introuvable
+
+`pully_parcelles.csv` a été généré par Codex, qui n'a laissé ni script ni journal.
+Les règles ont été retrouvées en analysant la base elle-même. Les points suivants
+**n'ont pas pu être confirmés** et apparaîtront dans le rapport de comparaison :
+
+- **`surface_mo_m2`** : source exacte non trouvée. Si la couche parcelles ne fournit pas
+  de surface MO, le script prend la surface géométrique arrondie, qui correspond dans 89 % des cas.
+- **Zones d'affectation** : la base contient 4 champs absents de la couche publique 36
+  (`REMARQUES_GEO`, `REMARQUES_TYPE`, `SHAPE.AREA`, `SHAPE.LEN`). Les deux derniers sont
+  recalculés, les deux premiers restent vides. Codex a donc utilisé un autre service GEO.vd.
+- **Adresses** : le script prend `vd.adresse` (GEO.vd). La base a peut-être utilisé
+  `pully_adresses` (SIGIP).
+- **Liste des parcelles** : le script prend toutes les parcelles de la commune dans `vd.bien_fond`.
+  Le périmètre exact utilisé par Codex n'est pas connu.
+- **L'ordre des objets** dans les listes JSON n'est pas reproductible. La comparaison n'en tient
+  pas compte, sauf pour les notes.
+
+### 3. Accès et droits SIGIP
+
+- Le catalogue ASIT-VD indique que le WFS SIGIP est **restreint à la commune et à ses mandataires**
+  pour certaines données. Personne dans l'équipe n'a de compte. Si des couches sont refusées,
+  environ la moitié des colonnes (`sigip_*`, notes patrimoniales, RCB) ne pourra pas être rafraîchie.
+- Les conditions de viageo.ch pour ce service indiquent une utilisation **limitée au projet désigné,
+  sans commercialisation**, avec la mention « Copyrights géodonnées Ville de Pully ». Pour un outil
+  utilisé commercialement par un agent immobilier, ces droits sont **à clarifier avec la Ville de Pully**.
+
+### 4. Conséquences d'une actualisation complète
+
+- Une parcelle divisée ou fusionnée **change d'EGRID**. Les notes et décisions de l'expert
+  rattachées à l'ancien EGRID ne suivent pas automatiquement : le rapport liste les parcelles
+  ajoutées et absentes, le rapprochement reste manuel.
+- Les **pentes** et **formes** (`data/pentes_parcelles`, `data/formes_parcelles`) ne sont pas
+  recalculées par ce script. Les nouvelles parcelles n'en auront pas tant qu'on ne relance pas
+  `scripts/calculer_pentes_parcelles.py` et `scripts/calculer_formes_parcelles.py`.
+
+### 5. Ce qui n'existe pas encore côté application
+
+- **Pas de serveur ni d'API web** : c'est un script en ligne de commande. Le bouton
+  « Actualiser » de la maquette Figma ne peut pas le lancer directement. Il faudra un petit serveur
+  (par exemple FastAPI) qui lance le script en arrière-plan et renvoie `etat_actualisation.json`.
+- **Pas de déclenchement automatique** (mensuel ou autre).
+- **Bascule entre les bases, archivage, suppression** : à faire côté application. Le script
+  produit seulement les nouvelles versions dans `versions/`.
+- **Propriété communale** : aucune source n'est connectée. Ce critère reste « à vérifier ».
+
+### Après le premier lancement réel
+
+Lire `versions/…_comparaison.json`. Si une colonne diffère pour presque toutes les parcelles,
+c'est une règle ou une source à ajuster, pas un vrai changement de données.
