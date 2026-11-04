@@ -5,8 +5,8 @@ DIW26. Aucune écriture dans ``classification.py`` ou ``prospection.py``.
 
 Les champs non établis (pleine terre, distances réglementaires, dangers, accès,
 ISOS et ratio RD) ne sont JAMAIS supposés favorables. Le filtrage retourne :
-``exclue`` si un filtre éliminatoire est confirmé, ``a_verifier`` si un filtre
-éliminatoire est inconnu, ``retenue`` dans les autres cas.
+``rouge`` si exclusion confirmée, ``jaune`` si information obligatoire
+manquante ou couverture défavorable, et ``vert`` si toutes les règles actives passent.
 
 Les seuils de potentiel fort/moyen et ratio RD sont des SIGNAUX, pas des couleurs.
 Ce fichier ne certifie pas la constructibilité.
@@ -299,7 +299,19 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
     evaluation_unfavorable = [k for k, v in checks.items()
                               if v["etat"] == "echec" and not v["obligatoire"]]
     advisory_notes = [k for k, v in checks.items() if v["etat"] == "note"]
-    status = "exclue" if failed else "a_verifier" if unknown else "retenue"
+
+    # Only building coverage distinguishes green from yellow by default.
+    # The 600 m² surface threshold remains exclusively eliminatory.
+    evaluation_keys = ["emprise_max"]
+
+    if failed:
+        status = "rouge"
+    elif unknown:
+        status = "jaune"
+    elif all(checks[key]["etat"] == "ok" for key in evaluation_keys):
+        status = "vert"
+    else:
+        status = "jaune"
     return {
         "egrid": row.get("egrid", ""), "numero_parcelle": row.get("numero_parcelle", ""),
         "statut_filtrage_criteres": status, "filtres": checks,
@@ -322,7 +334,7 @@ def run(input_csv: Path = DEFAULT_DATA, config: Path = DEFAULT_CONFIG,
     with input_csv.open(encoding="utf-8-sig", newline="") as f:
         results = [evaluate_parcel(r, cfg, slope_index.get(r.get("egrid"))) for r in csv.DictReader(f)]
     summary = {"total": len(results), "effectifs": dict(Counter(r["statut_filtrage_criteres"] for r in results)),
-               "regle": "Exclusion connue prioritaire, sinon données obligatoires inconnues => vérification"}
+               "regle": "Rouge: exclusion confirmée; jaune: condition obligatoire inconnue ou couverture défavorable; vert: conditions vérifiées et couverture <= seuil"}
     if output is not None:
         if output.resolve() in {input_csv.resolve(), config.resolve()}:
             raise ValueError("La sortie ne peut pas écraser une entrée")
@@ -348,4 +360,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
