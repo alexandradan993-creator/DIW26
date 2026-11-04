@@ -4,7 +4,7 @@
 
 Le projet structure son analyse autour de deux temporalités clés pour évaluer les parcelles :
 - **Potentiel latent immédiat (Règlement actuel / PACom 1954) :** Analyse sous l'angle des dispositions en vigueur, incluant le COS (ex. 0,20 en zone de moyenne densité), la surface minimale de 600m² inclus, et les contraintes immédiates (reculs RDPPF, notes patrimoniales 1 à 3 exclues).
-- **Scénario d'évolution (Horizon Pully 2040 / 2030) :** Intégration des perspectives d'aménagement futur, de la zone réservée communale (exigence de pleine terre : exclusion sous 50 %, zone de malus entre 50% et 64%, confortable dès 65%), et des ratios de sous-exploitation (Rd).
+- **Scénario d'évolution (Horizon Pully 2040 / 2030) :** Intégration de la zone réservée communale (exigence de pleine terre : exclusion sous 50%, zone de malus entre 50% et 64%, confortable dès 65%) et des ratios de sous-exploitation (Rd).
 - **Périmètre d'application :** L'analyse globale du projet s'exécute sur un ensemble de 2672 parcelles recensées sur le territoire de Pully.
 
 ---
@@ -17,12 +17,12 @@ Deux indicateurs séparés sont calculés :
 ---
 
 ## 3. Synthèse des seuils validés (`criteres.json`)
-- **Surface minimale :** 600m² (fort potentiel > 1200 m², moyen potentiel 600-1200m², faible/exclusion < 600m²).
+- **Surface minimale :** 600m² (fort potentiel>1200m², moyen potentiel 600-1200m², faible/exclusion<600m²).
 - **Emprise max / COS :** 0,20 (pour la moyenne densité).
 - **Patrimoine :** Exclusion stricte des notes 1, 2 et 3 (les notes 4 à 7 sont prises en compte).
-- **Pleine terre (zone réservée) :** Exclusion < 50%, malus de 50% à 64%, confortable >= 65%.
-- **Ratio de sous-exploitation (Rd) :** Fort potentiel < 35 %, moyen potentiel 35%-70%, saturé/exclu > 70%.
-- **Écart constructible (potentiel de densification) :** Potentiel > 300m², moyen 50-300m², saturé < 50m².
+- **Pleine terre (zone réservée) :** Exclusion<50%, malus de 50% à 64%, confortable >= 65%.
+- **Ratio de sous-exploitation (Rd) :** Fort potentiel<35 %, moyen potentiel 35%-70%, saturé/exclu > 70%.
+- **Écart constructible (potentiel de densification) :** Potentiel>300m², moyen 50-300m², saturé < 50m².
 - **Reculs RDPPF :** Lisière de forêt (10m), cours d'eau (15m), route (3m).
 - **Pente :** Faible (<10%), modérée (10-25%), forte (>25%).
 - **Dangers et accès :** Exclusion en cas de zone à danger naturel avéré ou d'accès compliqué.
