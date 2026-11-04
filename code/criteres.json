@@ -23,8 +23,8 @@
   },
   "zonage_et_dangers": {
     "pente_max_autorisee_pourcentage": 25,
-    "penalite_isos": true,
-    "exclure_dangers_naturels": true,
-    "exclure_acces_complique": true
+    "penalite_isos": false,
+    "exclure_dangers_naturels": false,
+    "exclure_acces_complique": false
   }
 }
