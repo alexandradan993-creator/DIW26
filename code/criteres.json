@@ -1,5 +1,33 @@
 {
-  "surface_min_m2": 1000,
+  "surface_min_m2": 600,
   "emprise_max": 0.20,
-  "logements_max": 3
+  "surface_parcelle": {
+    "seuil_fort_potentiel_m2": 1200,
+    "seuil_moyen_potentiel_m2": 600
+  },
+  "patrimoine_recensement": {
+    "notes_exclues": [1, 2, 3]
+  },
+  "zone_reservee_pleine_terre": {
+    "seuil_exclusion_pourcentage": 50,
+    "seuil_malus_pourcentage": 64
+  },
+  "ratio_sous_exploitation_rd": {
+    "seuil_fort_potentiel": 0.35,
+    "seuil_moyen_potentiel": 0.70
+  },
+  "reculs_rdppf_metres": {
+    "lisiere_foret": 10,
+    "cours_d_eau": 15,
+    "route": 3
+  },
+  "zonage_et_dangers": {
+    "pente_max_autorisee_pourcentage": 25,
+    "penalite_isos": true,
+    "exclure_dangers_naturels": true,
+    "exclure_acces_complique": true
+  },
+  "echeance_energetique": {
+    "annee_opportunite_avant": 1990
+  }
 }
