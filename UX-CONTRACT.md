@@ -28,3 +28,12 @@ La base candidate n'est activée qu'après contrôles et calculs. Les champs per
 La carte et la liste sont une exploration locale de l'ensemble borné de Pully, chargé dans une seule réponse contrôlée. La recherche et les filtres existants sont transitoires, sans modification de la base ni persistance dans l'URL. Les dialogues et les suppressions de dossiers suivent le comportement existant fourni.
 
 Les données descriptives ISOS et dangers ne modifient pas les exclusions métier. Les inconnues restent inconnues. L'outil ne certifie ni la constructibilité ni une valeur immobilière.
+
+## Première publication privée
+
+L'interface et l'API sont hébergées ensemble sur Render selon `render.yaml` et
+`docs/MISE_EN_LIGNE.md`. Le serveur de publication demande une authentification
+HTTP Basic, transportée en HTTPS par Render. Le mot de passe est généré côté
+hébergeur et n'est jamais intégré dans l'interface. `/healthz` ne sert que le statut
+du service et reste anonyme. Aucune gestion de comptes ou de rôles multiples
+n'est ajoutée à cette première version.

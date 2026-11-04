@@ -10,6 +10,9 @@ module isolée, sans le modifier globalement. `service_contraintes.py` réutilis
 `Etat`, son écriture atomique et le verrou. Il appelle la classification existante
 sans changer ses règles et conserve les observations nouvelles séparément.
 
+Pour une première publication en ligne, suivre [le guide Render](../docs/MISE_EN_LIGNE.md).
+Le serveur local et Waitress utilisent désormais le même routeur WSGI (`application_web.py`).
+
 ## Installation et démarrage
 
 Depuis la racine, Python 3.12+ et un environnement virtuel actif :
