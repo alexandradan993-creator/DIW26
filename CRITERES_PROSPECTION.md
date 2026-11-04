@@ -20,9 +20,9 @@ Deux indicateurs séparés sont calculés :
 - **Surface minimale :** 600m² (fort potentiel>1200m², moyen potentiel 600-1200m², faible/exclusion<600m²).
 - **Emprise max / COS :** 0,20 (pour la moyenne densité).
 - **Patrimoine :** Exclusion stricte des notes 1, 2 et 3 (les notes 4 à 7 sont prises en compte).
-- **Pleine terre (zone réservée) :** Exclusion<50%, malus de 50% à 64%, confortable >= 65%.
-- **Ratio de sous-exploitation (Rd) :** Fort potentiel<35 %, moyen potentiel 35%-70%, saturé/exclu > 70%.
-- **Écart constructible (potentiel de densification) :** Potentiel>300m², moyen 50-300m², saturé < 50m².
+- **Pleine terre (zone réservée) :** Exclusion<50%, malus de 50% à 64%, confortable>=65%.
+- **Ratio de sous-exploitation (Rd) :** Fort potentiel<35 %, moyen potentiel 35%-70%, saturé/exclu>70%.
+- **Écart constructible (potentiel de densification) :** Potentiel>300m², moyen 50-300m², saturé<50m².
 - **Reculs RDPPF :** Lisière de forêt (10m), cours d'eau (15m), route (3m).
 - **Pente :** Faible (<10%), modérée (10-25%), forte (>25%).
 - **Dangers et accès :** Exclusion en cas de zone à danger naturel avéré ou d'accès compliqué.
@@ -31,8 +31,7 @@ Deux indicateurs séparés sont calculés :
 ---
 
 ## 4. Objectif et utilisateur
-Repérer les parcelles présentant les meilleurs signaux de potentiel pour l'expert, expliquer leur intérêt et indiquer les vérifications restantes. L'outil ne certifie ni la constructibilité ni les droits à bâtir et n'estime pas la valeur d'une parcelle.
-
+Repérer les parcelles présentant les meilleurs signaux de potentiel pour l'expert, expliquer leur intérêt et indiquer les vérifications restantes. L'outil ne certifie ni la constructibilité ni les droits à bâtir et n'estime pas la valeur d'une parcelle. 
 L'expert travaille seul, réalise actuellement une à deux expertises par mois et repère les occasions principalement lors de ses déplacements dans Pully. Il souhaite développer sa prospection auprès de clients privés. Le temps d'analyse non rémunéré après identification d'une parcelle constitue un coût important : l'outil doit faciliter la décision de poursuivre ou d'arrêter.
 
 ---
@@ -41,7 +40,6 @@ L'expert travaille seul, réalise actuellement une à deux expertises par mois e
 1. **Démolition-reconstruction :** Priorité principale.
 2. **Extension :** Scénario complémentaire confirmé lors de l'entretien.
 3. **Surélévation :** Intérêt indiqué, à traiter séparément avec vérification des hauteurs autorisées et de la structure.
-
 Une difficulté propre à un scénario ne prouve pas l'absence de toute possibilité sur la parcelle. Les exclusions expriment la cible commerciale de l'expert, pas une déclaration générale d'inconstructibilité.
 
 ---
@@ -65,5 +63,5 @@ Comparaison de l'emprise bâtie existante à une emprise théorique calculée à
 
 ## 8. Contraintes et signaux complémentaires
 - **Pleine terre :** Prise en compte du seuil de 50% (zone réservée).
-- **Forme et reculs :** Espace utilisable après reculs (forêt 10 m, cours d'eau 15m, route 3m).
+- **Forme et reculs :** Espace utilisable après reculs (forêt 10m, cours d'eau 15m, route 3m).
 - **Arbres et accès :** Analyse au cas par cas, pas d'exclusion automatique sans vérification des données de terrain.
