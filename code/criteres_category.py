@@ -170,8 +170,10 @@ def eligible_zone(row: dict) -> bool | None:
 def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict:
     """Evaluate a cadastral row and optional slope row against *all* JSON criteria.
 
-    Each check returns ``ok``, ``echec``, ``inconnu``, ``alerte``, or ``sans_objet``.
+    Each check returns ``ok``, ``echec``, ``inconnu``, ``alerte``, ``note``, or ``sans_objet``.
     ``obligatoire`` indicates a hard filter (unknown makes overall status grey).
+    Coverage and pleine-terre thresholds are evaluation criteria, not exclusions.
+    Forest, water and road setbacks are advisory notes only.
     The configurable risk/access flags are only used with explicit observations.
     """
     validate_config(cfg)
@@ -203,7 +205,7 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
     footprint = number(pick(row, "emprise_batie_m2", "emprise_cadastrale_m2"))
     coverage = None if area is None or footprint is None or not 0 <= footprint <= area else footprint / area
     minimum("surface_min_m2", "Surface de parcelle minimale (m²)", area, cfg["surface_min_m2"])
-    maximum("emprise_max", "Rapport emprise bâtie / parcelle", coverage, cfg["emprise_max"])
+    maximum("emprise_max", "Rapport emprise bâtie / parcelle", coverage, cfg["emprise_max"], False)
 
     # Area tiers are purely informational and never create a red exclusion.
     tiers = cfg["surface_parcelle"]
@@ -223,7 +225,7 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
         earth_pct = None
     earth_cfg = cfg["zone_reservee_pleine_terre"]
     minimum("pleine_terre_exclusion", "Pleine terre minimale (%)", earth_pct,
-            earth_cfg["seuil_exclusion_pourcentage"])
+            earth_cfg["seuil_exclusion_pourcentage"], False)
     add("pleine_terre_malus", "Alerte pleine terre (%)", earth_pct,
         earth_cfg["seuil_malus_pourcentage"],
         "inconnu" if earth_pct is None else "alerte" if earth_pct < earth_cfg["seuil_malus_pourcentage"] else "ok", False)
@@ -249,7 +251,13 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
         value = number(pick(row, field))
         if value is not None and value < 0:
             value = None
-        minimum("recul_" + key, label, value, cfg["reculs_rdppf_metres"][key])
+        threshold = cfg["reculs_rdppf_metres"][key]
+        add(
+            "recul_" + key, label, value, threshold,
+            "inconnu" if value is None else "note" if value < threshold else "ok",
+            False,
+            "Recul indicatif à vérifier selon les règles applicables; non éliminatoire.",
+        )
 
     slope_data = slope_row or {}
     slope = number(pick(slope_data, "pente_mediane_pct"))
@@ -287,11 +295,15 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
     failed = [k for k, v in checks.items() if v["etat"] == "echec" and v["obligatoire"]]
     unknown = [k for k, v in checks.items() if v["etat"] == "inconnu" and v["obligatoire"]]
     alerts = [k for k, v in checks.items() if v["etat"] == "alerte"]
+    evaluation_unfavorable = [k for k, v in checks.items()
+                              if v["etat"] == "echec" and not v["obligatoire"]]
+    advisory_notes = [k for k, v in checks.items() if v["etat"] == "note"]
     status = "exclue" if failed else "a_verifier" if unknown else "retenue"
     return {
         "egrid": row.get("egrid", ""), "numero_parcelle": row.get("numero_parcelle", ""),
         "statut_filtrage_criteres": status, "filtres": checks,
         "filtres_echoues": failed, "filtres_inconnus": unknown, "alertes": alerts,
+        "criteres_evaluation_defavorables": evaluation_unfavorable, "notes_reglementaires": advisory_notes,
         "zone_dominante": pick(row, "zone_dominante"), "surface_m2": area, "emprise_ratio": coverage, "pleine_terre_pct": earth_pct,
         "ratio_rd": ratio, "pente_mediane_pct": slope,
     }
@@ -315,7 +327,7 @@ def run(input_csv: Path = DEFAULT_DATA, config: Path = DEFAULT_CONFIG,
             raise ValueError("La sortie ne peut pas écraser une entrée")
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8-sig", newline="") as f:
-            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"]
+            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "criteres_evaluation_defavorables", "notes_reglementaires", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"]
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
             for r in results:
