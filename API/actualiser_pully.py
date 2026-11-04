@@ -551,7 +551,12 @@ def deriver(L: dict):
                                 ("surf_plancher", "rcb_surf_plancher", "somme")]:
         v = [o[champ] for o in rcb if o.get(champ) is not None]
         L[f"{prefixe}_renseignes"] = len(v)
-        L[f"{prefixe}_{agg}"] = (float(sum(v)) if agg == "somme" else float(max(v))) if v else None
+        valeurs_numeriques = [float(x) for x in v if x is not None and str(x).strip() != ""]
+        L[f"{prefixe}_{agg}"] = (
+            (sum(valeurs_numeriques) if agg == "somme" else max(valeurs_numeriques))
+            if valeurs_numeriques
+            else None
+        )
 
     notes = {
         "batiment_existante": ("sigip_rec_arch_s_json", "note_detail"),
