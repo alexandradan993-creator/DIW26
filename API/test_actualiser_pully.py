@@ -70,13 +70,41 @@ def main(ref):
         rapport = A.comparer(out, Path(ref))
         print(f"{'OK ' if rapport['modifiees'] == 0 else 'KO '} comparaison : {rapport['modifiees']} parcelles modifiées")
 
-    # 3. Extraction des URL
+    # 3. Types : les services renvoient "3" au lieu de 3, 785307 au lieu de 785307.0,
+    #    "2025-06-07" au lieu de "2025-06-07 00:00:00" (constaté au premier lancement réel)
+    def degrader(v):
+        if isinstance(v, bool) or v is None:
+            return v
+        if isinstance(v, float) and v.is_integer():
+            return int(v)
+        if isinstance(v, (int, float)):
+            return str(v)
+        if isinstance(v, str) and v.endswith(" 00:00:00"):
+            return v[:10]
+        return v
+    ko = total = 0
+    for r in rows:
+        for c, cles in A.SCHEMA["cles_json"].items():
+            for o in json.loads(r[c]):
+                brut = {k: degrader(v) for k, v in o.items()}
+                n = A.objet_json(cles, brut, o.get("surface_intersection_m2"), o.get("source_layer"),
+                                 A.TYPES.get(c))
+                total += 1
+                ko += n != o
+    print(f"{'OK ' if not ko else 'KO '} types rétablis comme la référence : {total - ko}/{total}")
+
+    # 4. La comparaison « significative » ignore les identifiants SIGIP renumérotés
+    a = '[{"gml_id": "rcb_bat.1", "surface": 156.0}]'
+    b = '[{"gml_id": "rcb_bat.9", "surface": 156.004}]'
+    print(f"{'OK ' if A.normaliser(a, True) == A.normaliser(b, True) else 'KO '} gml_id ignoré en comparaison significative")
+
+    # 5. Extraction des URL
     o = A.objet_json(["lien", "source_layer", "surface_intersection_m2", "lien_urls"],
                      {"lien": "<a onclick=\"javascript:window.open('https://x.ch/a.pdf')\">ici</a>"}, 1.5, "zone_reservee")
     print(f"{'OK ' if o['lien_urls'] == ['https://x.ch/a.pdf'] else 'KO '} extraction des URL", o)
     print(f"{'OK ' if A.typer_wfs('2025-06-07T00:00:00', 'datetime') == '2025-06-07 00:00:00' else 'KO '} format des dates")
     print(f"{'OK ' if A.trouver_egrid({'URL_EXTRAIT_RDPPF': 'https://www.rdppf.vd.ch/x?EGRID=CH485483457601'}) == 'CH485483457601' else 'KO '} lecture EGRID")
-    return not erreurs and identique
+    return not erreurs and identique and not ko
 
 
 if __name__ == "__main__":
