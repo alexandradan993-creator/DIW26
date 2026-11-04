@@ -2,7 +2,7 @@
   "surface_min_m2": 600,
   "emprise_max": 0.20,
   "surface_parcelle": {
-    "seuil_fort_potentiel_m2": 1200,
+    "seuil_fort_potentiel_m2": 600,
     "seuil_moyen_potentiel_m2": 600
   },
   "patrimoine_recensement": {
