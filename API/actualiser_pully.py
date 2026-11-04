@@ -36,6 +36,7 @@ from pathlib import Path
 
 ICI = Path(__file__).resolve().parent
 SCHEMA = json.loads((ICI / "schema_pully_parcelles.json").read_text(encoding="utf-8"))
+TYPES = SCHEMA.get("types_json", {})
 
 # ---------------------------------------------------------------------------
 # Configuration des sources (modifiable sans toucher au reste du code)
@@ -337,8 +338,34 @@ def typer_wfs(v, t):
 # ---------------------------------------------------------------------------
 # Construction de la base
 # ---------------------------------------------------------------------------
-def objet_json(cles: list[str], valeurs: dict, inter, source_layer=None) -> dict:
-    """Ordonne les clés comme dans la base de référence."""
+def caster(v, t):
+    """Convertit une valeur dans le type observé dans la base de référence.
+
+    Les services renvoient parfois des nombres sous forme de texte (SIGIP),
+    ou des entiers là où la base avait des décimaux (GEO.vd).
+    """
+    if v is None or t is None or isinstance(v, (list, dict)):
+        return v
+    try:
+        if t == "int":
+            return int(float(v))
+        if t == "float":
+            return float(v)
+        if t == "datetime":
+            m = DATE_RE.match(str(v))
+            return f"{m.group(1)} {m.group(2) or '00:00:00'}" if m else str(v)
+        if t == "str":
+            if isinstance(v, float) and v.is_integer():
+                return str(int(v))
+            return str(v)
+    except (TypeError, ValueError):
+        return v
+    return v
+
+
+def objet_json(cles: list[str], valeurs: dict, inter, source_layer=None, types=None) -> dict:
+    """Ordonne les clés et les types comme dans la base de référence."""
+    types = types or {}
     o = {}
     for k in cles:
         if k == "surface_intersection_m2":
@@ -350,7 +377,7 @@ def objet_json(cles: list[str], valeurs: dict, inter, source_layer=None) -> dict
             if isinstance(base, str) and URL_RE.search(base):
                 o[k] = URL_RE.findall(base)
         else:
-            o[k] = valeurs.get(k)
+            o[k] = caster(valeurs.get(k), types.get(k))
     return o
 
 
@@ -480,7 +507,7 @@ def construire(etat: Etat, bbox_force=None) -> list[dict]:
                     g = e["geometrie"]
                     valeurs.setdefault("SHAPE.AREA", g.area)
                     valeurs.setdefault("SHAPE.LEN", g.length)
-                objets.append(objet_json(cles[col], valeurs, inter, couche_sigip))
+                objets.append(objet_json(cles[col], valeurs, inter, couche_sigip, TYPES.get(col)))
             L[col] = objets
             L[f"{nom}_nombre"] = len(objets)
             if nom in TOTAUX_SURFACE:
@@ -489,9 +516,11 @@ def construire(etat: Etat, bbox_force=None) -> list[dict]:
         # adresses (points GEO.vd)
         arbre, valides = index["adresses"]
         adr, _ = rattacher(poly, arbre, [sources["adresses"][i] for i in valides], True)
-        L["adresses_json"] = [{"rue": e["attributs"].get("VOIE_TXT"),
-                               "numero": none_str(e["attributs"].get("NO_ENTREE")),
-                               "egid": entier(e["attributs"].get("EGID"))} for e, _ in adr]
+        L["adresses_json"] = [objet_json(cles["adresses_json"],
+                                         {"rue": e["attributs"].get("VOIE_TXT"),
+                                          "numero": e["attributs"].get("NO_ENTREE"),
+                                          "egid": e["attributs"].get("EGID")},
+                                         None, None, TYPES.get("adresses_json")) for e, _ in adr]
         L["adresses_nombre"] = len(L["adresses_json"])
 
         deriver(L)
@@ -592,25 +621,37 @@ def ecrire_csv(chemin: Path, lignes: list[dict]):
     os.replace(tmp, chemin)
 
 
-def normaliser(v: str):
+# Clés ignorées dans la comparaison « significative » : identifiants techniques
+# que SIGIP renumérote à chaque rechargement de sa base.
+CLES_INSTABLES = {"gml_id", "OBJECTID"}
+
+
+def normaliser(v: str, significatif: bool = False):
     if v == "":
         return None
     try:
         j = json.loads(v)
     except (ValueError, TypeError):
         return v
+    dec = 0 if significatif else 2
     if isinstance(j, list):
-        return sorted((json.dumps(arrondir(o), sort_keys=True, ensure_ascii=False) for o in j))
-    return arrondir(j)
+        return sorted((json.dumps(arrondir(o, dec, significatif), sort_keys=True, ensure_ascii=False)
+                       for o in j))
+    return arrondir(j, dec, significatif)
 
 
-def arrondir(o):
-    if isinstance(o, float):
-        return round(o, 2) if math.isfinite(o) else o
+def arrondir(o, dec=2, significatif=False):
+    if isinstance(o, bool):
+        return o
+    if isinstance(o, (int, float)) and not isinstance(o, bool):
+        if isinstance(o, float) and not math.isfinite(o):
+            return o
+        return round(float(o), dec) if significatif or isinstance(o, float) else o
     if isinstance(o, dict):
-        return {k: arrondir(v) for k, v in o.items()}
+        return {k: arrondir(v, dec, significatif) for k, v in o.items()
+                if not (significatif and k in CLES_INSTABLES)}
     if isinstance(o, list):
-        return [arrondir(v) for v in o]
+        return [arrondir(v, dec, significatif) for v in o]
     return o
 
 
@@ -619,20 +660,34 @@ def comparer(nouveau: Path, reference: Path) -> dict:
     lire = lambda p: {r["egrid"]: r for r in csv.DictReader(open(p, encoding="utf-8-sig", newline=""))}
     N, R = lire(nouveau), lire(reference)
     colonnes_diff, exemples, modifiees = {}, {}, set()
+    sig_diff, sig_exemples, sig_modifiees = {}, {}, set()
     for eg in N.keys() & R.keys():
         for c in SCHEMA["colonnes"]:
-            if normaliser(N[eg].get(c, "")) != normaliser(R[eg].get(c, "")):
+            avant, apres = R[eg].get(c, ""), N[eg].get(c, "")
+            if normaliser(apres) != normaliser(avant):
                 colonnes_diff[c] = colonnes_diff.get(c, 0) + 1
                 modifiees.add(eg)
                 exemples.setdefault(c, []).append(
                     {"egrid": eg, "numero": R[eg]["numero_parcelle"],
-                     "avant": R[eg].get(c, "")[:300], "apres": N[eg].get(c, "")[:300]})
+                     "avant": avant[:2000], "apres": apres[:2000]})
+            if normaliser(apres, True) != normaliser(avant, True):
+                sig_diff[c] = sig_diff.get(c, 0) + 1
+                sig_modifiees.add(eg)
+                sig_exemples.setdefault(c, []).append(
+                    {"egrid": eg, "numero": R[eg]["numero_parcelle"],
+                     "avant": avant[:2000], "apres": apres[:2000]})
     return {
         "reference": str(reference), "nouveau": str(nouveau),
         "parcelles_reference": len(R), "parcelles_nouvelles": len(N),
         "ajoutees": sorted(N.keys() - R.keys()), "absentes": sorted(R.keys() - N.keys()),
         "modifiees": len(modifiees),
         "colonnes_differentes": dict(sorted(colonnes_diff.items(), key=lambda x: -x[1])),
+        "significatif": {
+            "explication": "gml_id/OBJECTID ignorés, nombres arrondis à l'unité, ordre ignoré",
+            "modifiees": len(sig_modifiees),
+            "colonnes_differentes": dict(sorted(sig_diff.items(), key=lambda x: -x[1])),
+            "exemples": {c: v[:5] for c, v in sig_exemples.items()},
+        },
         "exemples": {c: v[:5] for c, v in exemples.items()},
     }
 
@@ -725,7 +780,9 @@ def main():
             ecrire_atomique(sortie / nom.replace(".csv", "_comparaison.json"),
                             json.dumps(rapport, ensure_ascii=False, indent=2))
             bilan.update({k: (len(v) if isinstance(v, list) else v) for k, v in rapport.items()
-                          if k in ("ajoutees", "absentes", "modifiees")})
+                          if k in ("ajoutees", "absentes")})
+            # parcelles réellement modifiées (identifiants SIGIP et décimales ignorés)
+            bilan["modifiees"] = rapport["significatif"]["modifiees"]
         etat.maj(statut="termine", fin_utc=maintenant(), fichier=nom, bilan=bilan, etape=None)
         print(f"Terminé : {chemin}  {bilan}")
     except Exception as e:
