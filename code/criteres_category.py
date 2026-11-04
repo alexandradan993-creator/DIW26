@@ -6,7 +6,9 @@ DIW26. Aucune écriture dans ``classification.py`` ou ``prospection.py``.
 Les champs non établis (pleine terre, distances réglementaires, dangers, accès,
 ISOS et ratio RD) ne sont JAMAIS supposés favorables. Le filtrage retourne :
 ``rouge`` si exclusion confirmée, ``jaune`` si information obligatoire
-manquante ou couverture défavorable, et ``vert`` si toutes les règles actives passent.
+manquante, couverture défavorable, intersection forestière mesurée ou voisinage
+de parcelle contenant de la forêt (si contours disponibles), et
+``vert`` si toutes les règles actives passent sans alerte forestière détectée.
 
 Les seuils de potentiel fort/moyen et ratio RD sont des SIGNAUX, pas des couleurs.
 Ce fichier ne certifie pas la constructibilité.
@@ -25,6 +27,7 @@ from typing import Any
 DEFAULT_CONFIG = Path(__file__).with_name("criteres.json")
 DEFAULT_DATA = Path(__file__).resolve().parents[1] / "pully_parcelles.csv"
 DEFAULT_SLOPES = Path(__file__).resolve().parents[1] / "data" / "pentes_parcelles" / "pentes_parcelles.csv"
+DEFAULT_CONTOURS = Path(__file__).resolve().parents[1] / "data" / "parcelles" / "contours.geojson"
 
 
 def number(raw: Any) -> float | None:
@@ -167,13 +170,184 @@ def eligible_zone(row: dict) -> bool | None:
     return None if label is None else label in ALLOWED_ZONES
 
 
-def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict:
+# Informations prouvables depuis pully_parcelles.csv ; aucun registre externe.
+# Les indicateurs cadastraux sont descriptifs. Les alertes forestières
+# (intersection ou voisinage proxy) peuvent modifier vert -> jaune.
+INDICATOR_FIELDS = [
+    "genre_parcelle", "domaine_cadastral", "domaine_public_communal",
+    "domaine_public_cantonal", "proprietaire_communal_confirme",
+    "nombre_batiments", "emprise_batie_m2", "emprise_batie_pct",
+    "surface_hors_emprise_m2", "surface_verte_cartographiee_m2",
+    "surface_verte_cartographiee_pct", "surface_dure_cartographiee_m2",
+    "surface_dure_cartographiee_pct", "intersection_foret",
+    "surface_intersection_foret_m2", "part_intersection_foret_pct",
+    "intersection_eaux", "surface_intersection_eaux_m2",
+    "part_intersection_eaux_pct", "distance_lisiere_foret_m",
+    "distance_cours_d_eau_m", "source_indicateurs",
+    "voisine_parcelle_avec_foret", "distance_parcelle_forestiere_m",
+    "egrid_voisin_forestier", "methode_voisinage_foret",
+    "bordure_foret_confirmee",
+]
+
+
+def csv_indicators(row: dict) -> dict:
+    """Mesures et catégories cadastrales directement établies par le CSV.
+
+    Une intersection positive signifie une distance géométrique de 0 m entre
+    parcelle et objet intersecté, mais le CSV ne permet PAS de mesurer une
+    distance non nulle ni de conclure sur la propriété juridique du terrain.
+    """
+    type_key = normalized_zone(pick(row, "genre_parcelle"))
+    domains = {
+        "parcelle privee": ("Privé (catégorie cadastrale)", "Non", "Non"),
+        "dp communal": ("Communal (domaine public)", "Oui", "Non"),
+        "dp cantonal": ("Cantonal (domaine public)", "Non", "Oui"),
+        "ddp superficie": ("DDP superficie (domaine non déterminé)", "Indéterminé", "Indéterminé"),
+    }
+    domain, commune, canton = domains.get(type_key, ("Indéterminé", "Indéterminé", "Indéterminé"))
+    area = number(pick(row, "surface_geometrique_m2"))
+    if area is not None and area <= 0:
+        area = None
+    footprint = number(pick(row, "emprise_batie_m2"))
+    green = number(pick(row, "sigip_surfaces_vertes_surface_intersection_m2"))
+    hard = number(pick(row, "sigip_surfaces_dures_surface_intersection_m2"))
+    forest = number(pick(row, "sigip_forets_surface_intersection_m2"))
+    water = number(pick(row, "sigip_eaux_surface_intersection_m2"))
+    count = number(pick(row, "batiments_nombre"))
+    outside = number(pick(row, "surface_hors_emprise_batiments_m2"))
+
+    def pct(v: float | None) -> float | None:
+        return round(100 * v / area, 2) if v is not None and area is not None and v >= 0 else None
+
+    def yes_no(v: float | None) -> str:
+        return "Inconnu" if v is None or v < 0 else ("Oui" if v > 0 else "Non")
+
+    def measured(v: float | None) -> float | None:
+        return round(v, 2) if v is not None and v >= 0 else None
+
+    coverage = pct(footprint) if (area is not None and footprint is not None and 0 <= footprint <= area) else None
+    # Les distances hors intersection ne sont pas déductibles du CSV.
+    forest_dist = 0.0 if forest is not None and forest > 0 else None
+    water_dist = 0.0 if water is not None and water > 0 else None
+    return {
+        "genre_parcelle": pick(row, "genre_parcelle"),
+        "domaine_cadastral": domain,
+        "domaine_public_communal": commune,
+        "domaine_public_cantonal": canton,
+        "proprietaire_communal_confirme": "Non établi",
+        "nombre_batiments": int(count) if count is not None and count >= 0 else None,
+        "emprise_batie_m2": measured(footprint),
+        "emprise_batie_pct": coverage,
+        "surface_hors_emprise_m2": measured(outside),
+        "surface_verte_cartographiee_m2": measured(green),
+        "surface_verte_cartographiee_pct": pct(green),
+        "surface_dure_cartographiee_m2": measured(hard),
+        "surface_dure_cartographiee_pct": pct(hard),
+        "intersection_foret": yes_no(forest),
+        "surface_intersection_foret_m2": measured(forest),
+        "part_intersection_foret_pct": pct(forest),
+        "intersection_eaux": yes_no(water),
+        "surface_intersection_eaux_m2": measured(water),
+        "part_intersection_eaux_pct": pct(water),
+        "distance_lisiere_foret_m": forest_dist,
+        "distance_cours_d_eau_m": water_dist,
+        "source_indicateurs": "pully_parcelles.csv",
+    }
+
+
+
+def compute_forest_neighbor_index(rows: list[dict], contours_path: Path,
+                                  tolerance_m: float = 1.0) -> dict[str, dict]:
+    """Conservative proximity *proxy* based on parcel polygons, NOT forest borders.
+
+    Parcel contours are WGS84 GeoJSON. Project to Swiss LV95 (metres) before
+    measuring. A neighbouring cadastral parcel whose CSV forest-overlap area is
+    positive is a signal for caution; its actual forest may be on the other side
+    of that parcel. Never label the result a forest-boundary distance.
+
+    Requires shapely>=2 and pyproj. Does not download external data.
+    """
+    if tolerance_m < 0 or not math.isfinite(tolerance_m):
+        raise ValueError("tolerance_m doit être un nombre >= 0")
+    try:
+        from shapely.geometry import shape
+        from shapely.ops import transform
+        from shapely.strtree import STRtree
+        from pyproj import Transformer
+    except ImportError as exc:
+        raise RuntimeError("Pour --contours: pip install shapely pyproj") from exc
+
+    transformer = Transformer.from_crs("EPSG:4326", "EPSG:2056", always_xy=True)
+    with contours_path.open(encoding="utf-8") as f:
+        collection = json.load(f)
+    if collection.get("type") != "FeatureCollection":
+        raise ValueError("Le fichier des contours doit être un FeatureCollection GeoJSON WGS84")
+    source = {}
+    for r in rows:
+        egrid = str(r.get("egrid", "")).strip()
+        forest = number(r.get("sigip_forets_surface_intersection_m2"))
+        if egrid:
+            source[egrid] = forest
+    geometries = {}
+    for feat in collection.get("features", []):
+        egrid = str((feat.get("properties") or {}).get("egrid") or "").strip()
+        if egrid not in source or not feat.get("geometry"):
+            continue
+        geom = transform(transformer.transform, shape(feat["geometry"]))
+        if not geom.is_valid:
+            geom = geom.buffer(0)
+        if geom.is_empty:
+            continue
+        if egrid in geometries:
+            geometries[egrid] = geometries[egrid].union(geom)
+        else:
+            geometries[egrid] = geom
+
+    forest_egrids = [e for e, g in geometries.items() if source.get(e) is not None and source[e] > 0]
+    forest_geoms = [geometries[e] for e in forest_egrids]
+    tree = STRtree(forest_geoms) if forest_geoms else None
+    result = {}
+    for egrid, overlap in source.items():
+        if overlap is not None and overlap > 0:
+            result[egrid] = {"voisine_parcelle_avec_foret": "Sans objet (intersection sur parcelle)",
+                             "distance_parcelle_forestiere_m": None,
+                             "egrid_voisin_forestier": "", "methode_voisinage_foret": "intersection CSV"}
+            continue
+        if egrid not in geometries:
+            result[egrid] = {"voisine_parcelle_avec_foret": "Inconnu (contour absent)",
+                             "distance_parcelle_forestiere_m": None,
+                             "egrid_voisin_forestier": "", "methode_voisinage_foret": "contour absent"}
+            continue
+        current = geometries[egrid]
+        best = (float("inf"), "")
+        if tree is not None:
+            search = current.buffer(tolerance_m) if tolerance_m else current
+            for i in tree.query(search):
+                j = int(i)
+                if forest_egrids[j] == egrid:
+                    continue
+                d = current.distance(forest_geoms[j])
+                if d <= tolerance_m and d < best[0]:
+                    best = (d, forest_egrids[j])
+        has_neighbor = bool(best[1])
+        result[egrid] = {
+            "voisine_parcelle_avec_foret": "Oui" if has_neighbor else "Non détectée (dans le jeu de données)",
+            "distance_parcelle_forestiere_m": round(best[0], 2) if has_neighbor else None,
+            "egrid_voisin_forestier": best[1],
+            "methode_voisinage_foret": f"proxy: contour voisin avec intersection forêt CSV, distance <= {tolerance_m:g} m",
+        }
+    return result
+
+def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
+                    forest_neighbor_info: dict | None = None) -> dict:
     """Evaluate a cadastral row and optional slope row against *all* JSON criteria.
 
     Each check returns ``ok``, ``echec``, ``inconnu``, ``alerte``, ``note``, or ``sans_objet``.
     ``obligatoire`` indicates a hard filter (unknown makes overall status grey).
     Coverage and pleine-terre thresholds are evaluation criteria, not exclusions.
-    Forest, water and road setbacks are advisory notes only.
+    Water and road setbacks are advisory notes only. Forest overlap and
+    adjacency to a forest-overlapping PARCEL (proxy) trigger yellow caution.
+    Measured positive forest intersection additionally makes an otherwise-green parcel yellow.
     The configurable risk/access flags are only used with explicit observations.
     """
     validate_config(cfg)
@@ -242,7 +416,7 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
             ratio_cfg["seuil_moyen_potentiel"], False)
 
 
-    # These are measured *distances*, not layer intersection areas.
+    # These are measured distances, except a proven polygon intersection gives 0 m.
     distances = (
         ("lisiere_foret", "distance_lisiere_foret_m", "Distance à la lisière de forêt (m)"),
         ("cours_d_eau", "distance_cours_d_eau_m", "Distance au cours d'eau (m)"),
@@ -252,6 +426,14 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
         value = number(pick(row, field))
         if value is not None and value < 0:
             value = None
+        if value is None and key in ("lisiere_foret", "cours_d_eau"):
+            # A positive recorded intersection proves geometric distance 0 m.
+            # Zero overlap never proves the forest/watercourse is far away.
+            overlap_field = ("sigip_forets_surface_intersection_m2" if key == "lisiere_foret"
+                             else "sigip_eaux_surface_intersection_m2")
+            overlap = number(pick(row, overlap_field))
+            if overlap is not None and overlap > 0:
+                value = 0.0
         threshold = cfg["reculs_rdppf_metres"][key]
         add(
             "recul_" + key, label, value, threshold,
@@ -293,6 +475,32 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
         "inconnu" if access is None else "echec" if access else "ok",
         zone_cfg["exclure_acces_complique"])
 
+    # Forest intersection: screening alert, not a confirmed legal exclusion.
+    # Only a strictly positive observed area proves intersection; missing data
+    # does not by itself change an otherwise-green parcel to yellow.
+    forest_area = number(pick(row, "sigip_forets_surface_intersection_m2"))
+    forest_intersects = forest_area is not None and forest_area > 0
+    add(
+        "intersection_foret", "Intersection avec la forêt (surface mesurée)",
+        forest_area if forest_area is not None and forest_area >= 0 else None,
+        0,
+        "alerte" if forest_intersects else "inconnu" if forest_area is None or forest_area < 0 else "ok",
+        False,
+        "Intersection positive : vigilance forestière, classement jaune sauf exclusion rouge.",
+    )
+
+    # Mesure de voisinage cadastrale = INDICE, pas lisière forestière prouvée.
+    neighbor = forest_neighbor_info or {}
+    near_forest_parcel = neighbor.get("voisine_parcelle_avec_foret") == "Oui"
+    add(
+        "voisin_parcelle_forestiere", "Voisin d'une parcelle contenant de la forêt (indice)",
+        neighbor.get("distance_parcelle_forestiere_m"), None,
+        "alerte" if near_forest_parcel else "inconnu" if not neighbor or
+        str(neighbor.get("voisine_parcelle_avec_foret", "")).startswith("Inconnu") else "ok",
+        False,
+        "Distance entre contours cadastraux, NON distance à la forêt. Alerte jaune de précaution.",
+    )
+
     failed = [k for k, v in checks.items() if v["etat"] == "echec" and v["obligatoire"]]
     unknown = [k for k, v in checks.items() if v["etat"] == "inconnu" and v["obligatoire"]]
     alerts = [k for k, v in checks.items() if v["etat"] == "alerte"]
@@ -300,13 +508,12 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
                               if v["etat"] == "echec" and not v["obligatoire"]]
     advisory_notes = [k for k, v in checks.items() if v["etat"] == "note"]
 
-    # Only building coverage distinguishes green from yellow by default.
-    # The 600 m² surface threshold remains exclusively eliminatory.
+    # Area remains exclusively eliminatory; coverage + forest affect green/yellow.
     evaluation_keys = ["emprise_max"]
 
     if failed:
         status = "rouge"
-    elif unknown:
+    elif unknown or forest_intersects or near_forest_parcel:
         status = "jaune"
     elif all(checks[key]["etat"] == "ok" for key in evaluation_keys):
         status = "vert"
@@ -319,11 +526,17 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
         "criteres_evaluation_defavorables": evaluation_unfavorable, "notes_reglementaires": advisory_notes,
         "zone_dominante": pick(row, "zone_dominante"), "surface_m2": area, "emprise_ratio": coverage, "pleine_terre_pct": earth_pct,
         "ratio_rd": ratio, "pente_mediane_pct": slope,
+        **csv_indicators(row),
+        **{k: neighbor.get(k) for k in ("voisine_parcelle_avec_foret",
+            "distance_parcelle_forestiere_m", "egrid_voisin_forestier", "methode_voisinage_foret")},
+        "bordure_foret_confirmee": "Inconnu (pas de géométrie forestière)",
     }
 
 
 def run(input_csv: Path = DEFAULT_DATA, config: Path = DEFAULT_CONFIG,
-        slopes_csv: Path | None = DEFAULT_SLOPES, output: Path | None = None) -> dict:
+        slopes_csv: Path | None = DEFAULT_SLOPES, output: Path | None = None,
+        contours_geojson: Path | None = DEFAULT_CONTOURS,
+        tolerance_voisin_m: float = 1.0) -> dict:
     cfg = load_criteria(config)
     slope_index: dict[str, dict] = {}
     if slopes_csv is not None and slopes_csv.exists():
@@ -332,15 +545,23 @@ def run(input_csv: Path = DEFAULT_DATA, config: Path = DEFAULT_CONFIG,
                 if r.get("egrid"):
                     slope_index[r["egrid"]] = r
     with input_csv.open(encoding="utf-8-sig", newline="") as f:
-        results = [evaluate_parcel(r, cfg, slope_index.get(r.get("egrid"))) for r in csv.DictReader(f)]
+        rows = list(csv.DictReader(f))
+    neighbor_index = {}
+    geometry_used = bool(contours_geojson is not None and contours_geojson.is_file())
+    if geometry_used:
+        neighbor_index = compute_forest_neighbor_index(rows, contours_geojson, tolerance_voisin_m)
+    results = [evaluate_parcel(r, cfg, slope_index.get(r.get("egrid")),
+                               neighbor_index.get(r.get("egrid"))) for r in rows]
     summary = {"total": len(results), "effectifs": dict(Counter(r["statut_filtrage_criteres"] for r in results)),
-               "regle": "Rouge: exclusion confirmée; jaune: condition obligatoire inconnue ou couverture défavorable; vert: conditions vérifiées et couverture <= seuil"}
+               "voisinage_calcule": geometry_used,
+               "nombre_voisins_parcelles_forestieres": sum(r["voisine_parcelle_avec_foret"] == "Oui" for r in results),
+               "regle": "Rouge: exclusion confirmée; jaune: inconnus obligatoires, emprise défavorable, intersection de forêt ou voisin d'une parcelle avec forêt (proxy, si contours disponibles); vert: autres critères favorables"}
     if output is not None:
         if output.resolve() in {input_csv.resolve(), config.resolve()}:
             raise ValueError("La sortie ne peut pas écraser une entrée")
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8-sig", newline="") as f:
-            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "criteres_evaluation_defavorables", "notes_reglementaires", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"]
+            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "criteres_evaluation_defavorables", "notes_reglementaires", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"] + INDICATOR_FIELDS
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
             for r in results:
@@ -354,11 +575,14 @@ def main() -> None:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--pentes", type=Path, default=DEFAULT_SLOPES)
     parser.add_argument("--output", type=Path, default=Path("code/resultats_criteres_category.csv"))
+    parser.add_argument("--contours", type=Path, default=DEFAULT_CONTOURS,
+                        help="GeoJSON contours cadastraux WGS84; absent = pas de voisinage calculé")
+    parser.add_argument("--tolerance-voisin-m", type=float, default=1.0,
+                        help="Tolérance entre contours cadastraux, en mètres (défaut: 1)")
     args = parser.parse_args()
-    print(json.dumps(run(args.input, args.config, args.pentes, args.output), ensure_ascii=False, indent=2))
+    print(json.dumps(run(args.input, args.config, args.pentes, args.output,
+                             args.contours, args.tolerance_voisin_m), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
     main()
-
-
