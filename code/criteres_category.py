@@ -241,6 +241,7 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None) -> dict
     maximum("ratio_rd_moyen", "Ratio d'occupation RD, seuil moyen", ratio,
             ratio_cfg["seuil_moyen_potentiel"], False)
 
+
     # These are measured *distances*, not layer intersection areas.
     distances = (
         ("lisiere_foret", "distance_lisiere_foret_m", "Distance à la lisière de forêt (m)"),
