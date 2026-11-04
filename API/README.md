@@ -89,15 +89,10 @@ Les URL et numéros de couche sont regroupés en haut du script.
 - La zone dominante est celle qui a la plus grande intersection. Les agrégats RCB sont des sommes
   (logements, plancher) ou des maximums (niveaux, année).
 
-## Problèmes actuels (état au 4 novembre 2026)
+## Problèmes actuels (mis à jour le 4 novembre 2026)
 
-### 1. Pas encore testé contre les vrais sites
-
-Le script a été écrit dans un environnement qui ne pouvait pas joindre GEO.vd ni SIGIP.
-Seules les règles de calcul et le format d'écriture sont testés, hors ligne, contre la base
-actuelle (`test_actualiser_pully.py` : tout passe). La récupération des données,
-la lecture du WFS SIGIP et des réponses GEO.vd, les géométries et les intersections
-**n'ont jamais tourné**. Première étape : `python actualiser_pully.py --diagnostic`.
+1. ### Test et diagnostic réels validés
+   Le script a été testé avec succès en conditions réelles contre les flux GEO.vd et SIGIP. La récupération des données, les géométries, les intersections et l'écriture du rapport complet dans `versions/` sont désormais pleinement opérationnelles.
 
 ### 2. Script d'origine introuvable
 
