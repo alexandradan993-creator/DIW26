@@ -1,8 +1,3 @@
-"""Présélection explicable de parcelles de Pully depuis le CSV existant.
-
-Python 3.10+, bibliothèque standard uniquement. Exécution hors ligne.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -21,7 +16,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class Criteria:
-    surface_min_m2: float = 1000
+    surface_min_m2: float = 600
     emprise_max: float = 0.20
     logements_max: int = 3
 
@@ -34,9 +29,6 @@ class Criteria:
         if self.logements_max < 1 or int(self.logements_max) != self.logements_max:
             raise ValueError("logements_max doit être un entier positif.")
 
-
-# Chaque groupe doit être présent dans le schéma pour permettre son contrôle.
-# La couche ponctuelle est examinée lorsqu'elle est disponible.
 HERITAGE_SOURCES = (
     ("batiment_existant", "notes_batiment_existante_json", "sigip_rec_arch_s_json", "note_detail"),
     ("batiment_provisoire", "notes_batiment_provisoire_json", "sigip_pully_recensement_provisoire_batiments_json", "note_provisoire"),
@@ -65,7 +57,6 @@ FIELDS = (
     "url_rdppf", "url_extrait_rdppf", "decision_conti", "motif_conti",
 )
 
-
 def numeric(value: object) -> float | None:
     if value is None or str(value).strip().lower() in ("", "nan", "null", "none"):
         return None
@@ -74,7 +65,6 @@ def numeric(value: object) -> float | None:
     except ValueError:
         return None
     return result if math.isfinite(result) else None
-
 
 def json_array(row: dict, field: str, issues: list[str]) -> list:
     value = row.get(field)

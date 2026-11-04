@@ -10,7 +10,6 @@ from classification import run as run_classification
 from preparer_terrain import main as preparer_terrain_main
 from calculer_formes_parcelles import main as calculer_formes_main
 from calculer_pentes_parcelles import main as calculer_pentes_main
-from exporter_qgis import main as exporter_qgis_main
 
 def main():
     print("Lancement du pipeline complet Foncimo - Densification à Pully...\n")
@@ -41,18 +40,12 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     rapport = run_classification(input_csv, config_json, output_dir)
 
-    print("\n--- Étape 5/5 : Export des données géographiques pour QGIS ---")
-    try:
-        exporter_qgis_main()
-    except Exception as e:
-        print(f"Erreur lors de l'export QGIS : {e}")
-
     print("\nPipeline complet terminé avec succès")
     print("Statistiques globales de classification :")
     for statut, nombre in rapport.get('effectifs', {}).items():
         print(f"  - {statut} : {nombre} parcelles")
 
-    print(f"\n Tous les résultats consolidés sont enregistrés dans : {output_dir.resolve()}")
+    print(f"\nTous les résultats consolidés sont enregistrés dans : {output_dir.resolve()}")
 
 if __name__ == "__main__":
     main()
