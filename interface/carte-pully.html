@@ -1,0 +1,428 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foncimo · Prospection à Pully</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap"><style>
+*{box-sizing:border-box}body{margin:0;font:17px system-ui;color:#18372d;background:#f4f7f5}header{padding:20px 26px;background:white}h1{margin:0 0 6px}p{margin:0}main{position:relative;height:calc(100dvh - 136px);min-height:320px;overflow:hidden;background:#e5efeb;touch-action:none;cursor:grab}main.drag{cursor:grabbing}svg{position:absolute;transform-origin:0 0;pointer-events:none}nav{position:absolute;right:16px;bottom:16px;display:grid;gap:6px}button{border:1px solid #9cafa5;border-radius:8px;background:white;color:#18372d;padding:9px 14px;font:bold 18px system-ui;cursor:pointer}footer{padding:10px 26px;font-size:14px}
+canvas{position:absolute;inset:0;width:100%;height:100%}aside{position:absolute;left:16px;bottom:16px;background:white;border-radius:8px;padding:12px}aside a{margin:0 10px}main{margin:0 22px;border:1px solid #c7d7ce;border-radius:16px;background:#eaf2ef;height:calc(100dvh - 168px)}aside{box-shadow:0 5px 20px #18372d22;padding:16px}aside div{margin-top:8px}dialog{width:min(650px,90vw);max-height:85vh;overflow:auto;border:1px solid #b4c9bd;border-radius:16px;color:#18372d;padding:24px}dialog::backdrop{background:#18372d66}dialog form{float:right}dialog li{margin-bottom:7px}dialog p{margin:10px 0}a{color:#175843}footer{padding:10px 24px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 365px;gap:16px;padding:0 22px}.layout main{margin:0}.results{background:white;border:1px solid #c7d7ce;border-radius:16px;padding:14px;display:flex;flex-direction:column;min-height:0;height:calc(100dvh - 168px)}.results h2{margin:0 0 10px}.tabs{display:flex;gap:4px;flex-wrap:wrap}.tabs button,.parcelRow{font-size:14px;padding:7px 9px}.tabs button[aria-pressed=true]{outline:2px solid #185445;outline-offset:-2px}.results label{display:grid;gap:4px;margin:12px 0;font-size:14px}.results input{font:inherit;padding:7px;border:1px solid #aebfb7;border-radius:6px}#parcelRows{overflow:auto;display:grid;gap:6px;align-content:start}.parcelRow{display:flex;justify-content:space-between;text-align:left;gap:6px;border:0}.parcelRow[aria-pressed=true]{outline:2px solid #185445;outline-offset:-2px}.status0{background:#eaf5ee}.status1{background:#fbf5e2}@media(max-width:800px){.layout{grid-template-columns:1fr}.results{height:340px}}.topbar{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:14px}.mainnav{display:flex;gap:6px;flex-wrap:wrap}.mainnav a,.mainnav span{padding:7px 12px;border-radius:6px;text-decoration:none;font-weight:600}.mainnav span{background:#dceee4}.mainnav a:hover,.mainnav a:focus-visible{background:#edf4ef}.layout main,.results{height:calc(100dvh - 220px)}@media(max-width:800px){.results{height:340px}}.topbar{border-bottom:1px solid #d3e1d9;padding-bottom:12px}.mainnav a,.mainnav span{display:inline-block}.results select{width:100%;font:inherit;padding:10px 8px;border:1px solid #aebfb7;border-radius:7px;background:white;color:#18372d}.results #parcelRows[hidden]{display:none}header{padding:0 22px 14px;background:transparent}.topbar{margin:0 -22px 15px;padding:13px 22px;background:#174e41;color:#fff;gap:24px;border:0}.topbar>strong{font-size:18px}.mainnav{gap:8px}.mainnav a,.mainnav span{color:#fff;padding:10px 16px;font-size:16px;border:1px solid #ffffff45}.mainnav span{background:#fff;color:#174e41}.mainnav a:hover,.mainnav a:focus-visible{background:#347261}.layout main,.results{height:clamp(340px,54vh,520px)}.topbar{gap:28px;padding:15px 26px}.mainnav{gap:10px}.mainnav a,.mainnav span{min-height:50px;min-width:100px;text-align:center;padding:12px 19px;font-size:17px}.layout{max-width:1440px;margin:auto;grid-template-columns:minmax(0,1fr) minmax(270px,340px)}.layout main,.results{height:clamp(365px,56dvh,535px)}@media(max-width:800px){.layout{grid-template-columns:1fr}.layout main{height:clamp(320px,48dvh,430px)}.results{height:auto;min-height:210px}}.topbar{padding:20px 28px;gap:24px;margin-bottom:24px}.mainnav{gap:12px}.mainnav a,.mainnav span{display:inline-flex;align-items:center;justify-content:center;min-height:62px;min-width:120px;padding:14px 22px;font-size:19px;border:2px solid #ffffff65}.mainnav a:focus-visible{outline:3px solid #fff;outline-offset:3px}.layout{margin:36px auto 0}.layout main,.results{height:clamp(340px,51dvh,500px)}@media(max-width:800px){.mainnav a,.mainnav span{min-height:54px;min-width:96px;padding:10px 12px;font-size:16px}.layout{margin-top:24px}.results{height:auto}}.topbar{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:14px}.mainnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.mainnav a,.mainnav span{min-width:0;padding:12px 5px;white-space:nowrap;font-size:clamp(14px,1.55vw,19px)}.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.tabs button{min-width:0;min-height:44px;padding:7px 3px;text-align:center;white-space:nowrap;font-size:13px}@media(max-width:760px){.topbar{grid-template-columns:minmax(0,1fr)}.mainnav a,.mainnav span{font-size:clamp(10px,2.6vw,15px)}}.mainnav button{display:inline-flex;align-items:center;justify-content:center;min-height:62px;min-width:0;padding:10px 5px;color:white;background:#174e41;border:2px solid #ffffff65;font-size:clamp(13px,1.55vw,19px)}.mainnav button[aria-current=page]{color:#174e41;background:white}.mainnav button:hover{outline:2px solid white}#workspacePanel{max-width:1180px;margin:25px auto;padding:22px;background:white;border:1px solid #c7d7ce;border-radius:12px}#workspacePanel input,#workspacePanel select{font:inherit;padding:8px;margin:8px 10px 8px 0}#inlineRows{max-height:58vh;overflow:auto;display:grid;gap:7px}#inlineRows button{display:flex;justify-content:space-between;font-size:15px;text-align:left}.layout[hidden]{display:none}.results input{width:100%}.results label select{margin-bottom:4px}.inlineChoices{display:flex;gap:12px;flex-wrap:wrap}.inlineChoices label{display:grid;gap:4px;min-width:240px}.inlineChoices select{max-width:100%}.addressResults{display:grid;gap:5px;overflow:auto;max-height:180px;min-height:0}.addressResults:empty{display:none}.addressResults button{text-align:left;font-size:14px;padding:7px 8px}.addressSearch{flex:1;min-width:240px}.addressSearch input{width:100%}#followUp{display:grid;gap:9px;margin:14px 0;border:1px solid #c7d7ce;border-radius:8px}#followUp label{display:grid;gap:4px}#followUp input,#followUp textarea,#followUp select{font:inherit;padding:6px}#exportAll{margin-bottom:12px}.folderRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.folderRow>button:first-child{flex:1}.folderRow small{display:block;flex-basis:100%;padding:0 8px 6px}.folderFilter{display:block}.contactCheck{display:flex!important;align-items:center;gap:8px}
+:root{--foncimo-dark:#2a3c37;--foncimo-accent:#d3de79;--foncimo-soft:#eef4b8;--foncimo-paper:#f3f6f8;--foncimo-line:#dfe3e5;--foncimo-text:#2b2b2b}
+body{font-family:Kanit,system-ui,sans-serif;font-weight:400;background:var(--foncimo-paper);color:var(--foncimo-text)}
+button,input,select,textarea{font-family:inherit}
+h1,h2,h3{color:var(--foncimo-dark);font-weight:500;line-height:1.15}
+.topbar{background:var(--foncimo-dark);color:white}
+.brandWord{font-size:28px!important;font-weight:600;line-height:1}
+.brandWord small{display:block;font-size:13px;font-weight:400;color:var(--foncimo-soft);margin-top:5px}
+.mainnav button{background:var(--foncimo-dark);border:1px solid #ffffff70;border-radius:0;font-weight:500}
+.mainnav button[aria-current=page],.mainnav button:hover{background:var(--foncimo-accent);color:var(--foncimo-dark);border-color:var(--foncimo-accent);outline:0}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #6b7b27;outline-offset:2px}
+.mainnav button:focus-visible{outline:3px solid var(--foncimo-soft);outline-offset:2px}
+.layout main,.results,#workspacePanel,dialog,aside{border-color:var(--foncimo-line);border-radius:0}
+.layout main{background:#e9eeec}
+button,input,select,textarea,.results select,.results input,#followUp{border-radius:0;border-color:#a6b1ac}
+#mapSave,#saveParcel,#exportAll{background:var(--foncimo-accent);color:var(--foncimo-dark);border-color:var(--foncimo-dark)}
+button:disabled{opacity:.65;cursor:default}
+a{color:var(--foncimo-dark);text-underline-offset:3px}
+.tabs button[aria-pressed=true]{outline-color:var(--foncimo-dark)}
+.trashButton{width:42px;min-height:40px;display:inline-grid!important;place-items:center;padding:5px!important}.trashButton svg{position:static;pointer-events:none}.savedBadge{font-size:14px;color:#2a3c37}.status1{background:#fcf2cd;border-color:#bca260}.status2{background:#f9e5ec;border-color:#b58291}.tabs button{white-space:normal;line-height:1.15}#commitFolder{background:var(--foncimo-accent);border-color:var(--foncimo-dark);font-weight:600}.mainnav{grid-template-columns:repeat(4,minmax(0,1fr))}.criteriaMenu{margin:9px 0}.criteriaMenu summary{cursor:pointer;font-weight:600;padding:8px;border:1px solid #a6b1ac}.criteriaMenu form{padding:8px;background:#f3f6f8}.criteriaMenu form label{display:flex;align-items:center;gap:7px;margin:5px 0}.criteriaMenu form input{width:auto!important;margin:0!important}.criteriaMenu small{display:block;margin:6px 0}.criteriaMenu button{margin-right:5px;font-size:14px}.outsideFilters{background:#f4ced2!important;border-color:#bd454d!important;color:#70242a}.results{overflow:auto}.criteriaMenu form{display:grid;gap:10px;padding:12px;border:1px solid #dfe3e5}.criteriaMenu fieldset{margin:0;padding:7px 10px;border:1px solid #c6ceca}.criteriaMenu legend{font-weight:600;padding:0 4px}.thresholdControl+.thresholdControl{border-top:1px solid #dfe3e5;margin-top:8px;padding-top:7px}.sliderLine{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:8px;align-items:center}.criteriaMenu .sliderLine input[type=range]{width:100%!important;accent-color:#51652b;padding:0}.sliderLine output{text-align:right;font-weight:600}.filterActions{display:flex;gap:6px;flex-wrap:wrap}.filterActions button:first-child{background:#d3de79;font-weight:600}#listFilters .criteriaMenu form{max-width:480px}.folderImport{margin:10px 0;padding:10px;border:1px solid #dfe3e5}.folderImport summary{cursor:pointer;font-weight:600}.folderImport label{display:grid;gap:4px;margin:8px 0}.folderImport textarea{width:100%;padding:8px}.folderImport p:empty{display:none}#clearFolders,#clearFoldersConfirm{border-color:#a54c57;color:#792c37}#clearFoldersConfirm{background:#f9e5ec}#clearFolders{margin-left:6px}#refreshData{background:var(--foncimo-accent);border-color:var(--foncimo-dark);font-weight:600}#refreshStatus:empty{display:none}#details{width:min(760px,94vw)}.parcelFacts{margin:16px 0;padding:12px;background:#f3f6f8}.parcelFacts h3{margin:0 0 5px}.parcelFacts dl{display:grid;grid-template-columns:minmax(145px,1fr) minmax(0,1.3fr);gap:6px 12px;margin:10px 0 0}.parcelFacts dt{font-weight:500}.parcelFacts dd{margin:0;overflow-wrap:anywhere}.tabs button[aria-pressed=true]{outline:3px solid #2a3c37;outline-offset:-3px;font-weight:600}.tabs .status2{background:#f9e5ec;border-color:#b58291}.status2,.status2.outsideFilters{background:#f9e5ec!important;border-color:#b58291!important;color:#2a3c37}.topbar{margin-bottom:12px}header{padding-bottom:8px}.layout{max-width:none;margin:14px auto 0;grid-template-columns:minmax(0,1fr) clamp(265px,22vw,325px);gap:12px}.layout main,.results{height:max(420px,calc(100dvh - 205px))}@media(max-width:800px){.layout{grid-template-columns:1fr}.layout main{height:max(360px,59dvh)}.results{height:auto;min-height:0}}:root{--scroll-thumb:#a6b1ac;--scroll-track:#f3f6f8}*{scrollbar-color:var(--scroll-thumb) var(--scroll-track);scrollbar-width:thin}::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-thumb{background:var(--scroll-thumb)}::-webkit-scrollbar-track{background:var(--scroll-track)}::-webkit-scrollbar-thumb:hover{background:#6b7b70}textarea{resize:none}#refreshStatus{min-height:5em;margin-top:12px;white-space:pre-line}#refreshData{min-width:250px}#applicationStatus{min-height:24px;font-size:14px;padding:4px 26px;background:var(--foncimo-soft)}.observationSource{display:block;font-size:12px;overflow-wrap:anywhere}@media(forced-colors:active){*{scrollbar-color:auto}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto;animation:none!important;transition:none!important}}</style><header><div class="topbar"><strong class="brandWord">Foncimo <small>Prospection à Pully</small></strong><div class="mainnav" role="navigation" aria-label="Navigation principale"><button data-tab="map" aria-current="page" onclick="navigateTab(this)">Carte</button><button data-tab="list" onclick="navigateTab(this)">Liste</button><button data-tab="saved" onclick="navigateTab(this)">Dossiers</button><button data-tab="data" onclick="navigateTab(this)">Données</button></div></div><h1>Carte de Pully</h1><p>Maintenez le clic et glissez pour déplacer la carte. Tournez la molette pour zoomer. Cliquez sur une parcelle pour ouvrir sa fiche ou la voir dans SIGIP.</p></header><div class="layout"><main aria-label="Carte cadastrale"><canvas aria-label="Contours des parcelles"></canvas><aside hidden><strong id="parcel"></strong><div><button id="mapSave" type="button" onclick="foncimoClicks.mapSave(event)">Sauvegarder</button> <button id="sheet" onclick="foncimoClicks.sheet(event)">Ouvrir la fiche</button> <a id="mapUzu" target="_blank" rel="noopener">Voir en 3D ↗</a> <a id="cadastre" href="https://www.sigip.ch/" target="_blank" rel="noopener">Ouvrir SIGIP ↗</a></div></aside><nav aria-label="Zoom"><button id="plus" aria-label="Zoom avant" onclick="foncimoClicks.plus(event)">+</button><button id="minus" aria-label="Zoom arrière" onclick="foncimoClicks.minus(event)">−</button><button id="reset" onclick="foncimoClicks.reset(event)">Vue de Pully</button></nav></main><section class="results"><h2>Parcelles</h2><div class="tabs" aria-label="Statut des parcelles"></div><div id="mapFilters"></div><label>Filtrer les choix<input id="searchParcel" placeholder="Numéro, EGRID ou adresse"></label><label for="parcelSelect">Numéro de parcelle ou EGRID<select id="parcelSelect"></select></label><label>Rechercher une adresse<input id="mapAddressSearch" placeholder="Rue et numéro"></label><div id="mapAddressResults" class="addressResults" aria-live="polite"></div><div id="parcelRows" hidden></div></section></div><section id="workspacePanel" hidden></section><dialog id="details"><form novalidate method="dialog"><button>Fermer</button></form><h2 id="detailTitle"></h2><p id="detailStatus"></p><p id="detailFacts"></p><button id="saveParcel" type="button" onclick="foncimoClicks.saveParcel(event)">Sauvegarder le dossier</button> <div id="parcelSections"></div><h3 id="checksHeading">Motifs et points à vérifier</h3><ul id="checks"></ul><p><a id="rdppf" target="_blank" rel="noopener">Consulter l’extrait RDPPF ↗</a> · <a id="detailUzu" target="_blank" rel="noopener">Voir en 3D ↗</a> · <a id="detailSigip" target="_blank" rel="noopener">Ouvrir SIGIP ↗</a></p></dialog><dialog id="folderDetails"><form novalidate method="dialog"><button>Fermer</button></form><h2 id="folderTitle"></h2><p id="folderIdentity"></p><fieldset id="followUp"><legend>Suivi personnel</legend><label class="contactCheck"><input id="ownerContact" type="checkbox"> Contact propriétaire</label><label>Décision <select id="decision"><option></option><option>À examiner</option><option>À vérifier</option><option>Écarté</option><option>Contact envisagé</option></select></label><label>Notes <textarea style="resize:none" id="personalNote"></textarea></label><label>Prochaine vérification <input id="nextCheck"></label></fieldset><button id="commitFolder" type="button" onclick="foncimoClicks.commitFolder(event)">Sauvegarder le dossier</button> <button id="exportParcel" type="button" onclick="foncimoClicks.exportParcel(event)">Exporter ce dossier (.xlsx)</button> <button id="removeFolder" type="button" onclick="foncimoClicks.removeFolder(event)">Retirer des dossiers</button></dialog><dialog id="confirmClearFolders"><form novalidate method="dialog"><button>Annuler</button></form><h2>Supprimer tous les dossiers ?</h2><p id="clearFoldersSummary"></p><p>Les notes de suivi restent disponibles si vous ajoutez à nouveau une parcelle.</p><button type="button" id="clearFoldersConfirm" onclick="foncimoClicks.clearFoldersConfirm(event)">Supprimer tous les dossiers</button></dialog><dialog id="confirmRemove"><form novalidate method="dialog"><button>Annuler</button></form><h2>Retirer ce dossier ?</h2><p id="removeSummary"></p><button type="button" id="confirmRemoveButton" onclick="foncimoClicks.confirmRemoveButton(event)">Retirer des dossiers</button></dialog><dialog id="createFolder"><form novalidate method="dialog"><button>Annuler</button></form><h2>Créer un dossier</h2><label>Rechercher une parcelle <input id="folderQuery" placeholder="Numéro ou EGRID"></label><div id="folderChoices" class="addressResults"></div></dialog><footer id="mapCredit">Contours issus du cadastre</footer><p id="applicationStatus" role="status" aria-live="polite">Chargement de la version serveur…</p><script>
+const foncimoClicks={};
+const parcels=[], map=document.querySelector('main'), canvas=map.querySelector('canvas'), ctx=canvas.getContext('2d');
+const colors={exclue_cible:'#f3cbd7',retenue_filtres_connus:'#499274',a_verifier_filtres:'#f7e6aa'};
+function makeShape([num,egrid,status,polys,cx,cy,info,center,lonlat,altitude]){
+ const path=new Path2D();let l=Infinity,t=Infinity,r=-Infinity,b=-Infinity;
+ for(const poly of polys)for(const ring of poly){ring.forEach(([x,y],i)=>{i?path.lineTo(x,y):path.moveTo(x,y);l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y)});path.closePath()}
+ return {num,egrid,status,path,cx,cy,l,t,r,b,info,center,lonlat,altitude};
+}
+const shapes=parcels.map(makeShape);
+function uzu(q){if(!q.center)return '';const [x,y]=q.center;if(q.altitude!=null)return 'https://pully.uzuverse.com/?x='+x+'&y='+y+'&z='+q.altitude;const [lon,lat]=q.lonlat;return 'https://pully.uzuverse.com/?lon='+lon+'&lat='+lat+'&alt=1000&hpr=0,-1.5707963267948966,0'}
+function sigip(center){
+ if(!center)return "";const [x,y]=center;
+ const url=new URL('https://www.sigip.ch/');
+ const p=url.searchParams;
+ p.set('lang','fr');
+ const groups=['points_fixes','adresses','objets_divers','batiments_couverts','parcelles','couverture_sol','limites'];
+ p.set('tree_groups',groups.map(k=>'grp_'+k).join(','));
+ for(const k of groups)p.set('tree_group_layers_grp_'+k,k==='parcelles'?'parcelles':k==='limites'?'communes':'');
+ p.set('map_x',x);p.set('map_y',y);p.set('map_zoom','6');p.set('map_crosshair','true');
+ p.set('baselayer_ref','grp_background_asitvd.fond_couleur');p.set('baselayer_opacity','0');
+ return url.href;
+}
+let x,y,s,minimum,dpr,drag,selected,pending=false;
+function draw(){if(pending)return;pending=true;requestAnimationFrame(()=>{
+ pending=false;const w=map.clientWidth,h=map.clientHeight;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+ const visible=shapes.filter(q=>q.r*s+x>=0&&q.b*s+y>=0&&q.l*s+x<=w&&q.t*s+y<=h);
+ ctx.translate(x,y);ctx.scale(s,s);ctx.lineWidth=1/s;ctx.strokeStyle='#fff';
+ for(const q of visible){ctx.globalAlpha=highlightedStatus&&q.status!==highlightedStatus?.25:1;ctx.fillStyle=q.status==='exclue_cible'||matchesCriteria(q)?(colors[q.status]||'#89968e'):'#bd454d';ctx.fill(q.path,'evenodd');ctx.strokeStyle=q.status==='exclue_cible'?'#ad7788':!matchesCriteria(q)?'#8e2c35':q.status==='a_verifier_filtres'?'#ad9251':'#fff';ctx.stroke(q.path)}
+ ctx.globalAlpha=1;if(selected){ctx.strokeStyle='#152d26';ctx.lineWidth=3/s;ctx.stroke(selected.path)}
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+ const cells=new Set();
+ for(const q of visible){if(highlightedStatus&&q.status!==highlightedStatus&&q!==selected)continue;if(q!==selected&&((q.r-q.l)*s<29||(q.b-q.t)*s<14))continue;
+ const a=q.cx*s+x,b=q.cy*s+y,key=Math.floor(a/38)+':'+Math.floor(b/20);if(cells.has(key)&&q!==selected)continue;cells.add(key);
+ ctx.lineWidth=3;ctx.strokeStyle='white';ctx.strokeText(q.num,a,b);ctx.fillStyle='#13261e';ctx.fillText(q.num,a,b)}
+})}
+function size(){dpr=devicePixelRatio||1;canvas.width=Math.round(map.clientWidth*dpr);canvas.height=Math.round(map.clientHeight*dpr);minimum=Math.min((map.clientWidth-24)/790,(map.clientHeight-24)/517)}
+function reset(){size();s=minimum;x=(map.clientWidth-790*s)/2;y=(map.clientHeight-517*s)/2;draw()}
+function zoom(f,px=map.clientWidth/2,py=map.clientHeight/2){const next=Math.max(minimum,Math.min(minimum*64,s*f));x=px-(px-x)*next/s;y=py-(py-y)*next/s;s=next;draw()}
+function pos(e){const r=map.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
+map.addEventListener('wheel',e=>{if(e.target.closest('nav,aside'))return;e.preventDefault();const [px,py]=pos(e);const dy=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?map.clientHeight:1);zoom(Math.exp(-Math.max(-120,Math.min(120,dy))*.002),px,py)},{passive:false});
+canvas.onpointerdown=e=>{if(e.button!==0)return;const [px,py]=pos(e);drag={id:e.pointerId,px,py,x,y,moved:false};canvas.setPointerCapture(e.pointerId);map.classList.add('drag')};
+canvas.onpointermove=e=>{if(!drag||e.pointerId!==drag.id)return;const [px,py]=pos(e);if(Math.hypot(px-drag.px,py-drag.py)>4)drag.moved=true;if(drag.moved){x=drag.x+px-drag.px;y=drag.y+py-drag.py;draw()}};
+canvas.onpointerup=e=>{if(!drag||drag.moved)return;const [px,py]=pos(e),a=(px-x)/s,b=(py-y)/s;ctx.setTransform(1,0,0,1,0,0);selected=shapes.find(q=>a>=q.l&&a<=q.r&&b>=q.t&&b<=q.b&&ctx.isPointInPath(q.path,a,b,'evenodd'));selectParcel(selected)};
+
+const statusKeys=['retenue_filtres_connus','a_verifier_filtres','exclue_cible'];
+const names=['Disponibles','Sous conditions','Exclues'];
+let highlightedStatus=null;
+let category=0;
+const results=document.querySelector('#parcelRows'), search=document.querySelector('#searchParcel');
+const select=document.querySelector('#parcelSelect');
+const parcelAddresses={};
+const normalizeSearch=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+function matchingAddress(r,q){const terms=normalizeSearch(q).split(' ').filter(Boolean);return (parcelAddresses[r.egrid]||[]).find(a=>terms.every(term=>normalizeSearch(a).includes(term)))}
+function searchMatch(r,q,mode){return !q||(mode==='address'?Boolean(matchingAddress(r,q)):r.num.toLowerCase().includes(q)||r.egrid.toLowerCase().includes(q))}
+const mapAddress=document.querySelector('#mapAddressSearch');
+const tabs=names.map((name,i)=>{
+ const b=document.createElement('button');b.textContent=name;b.className='status'+i;b.onclick=()=>{category=i;highlightedStatus=highlightedStatus===statusKeys[i]?null:statusKeys[i];renderRows();draw()};document.querySelector('.tabs').append(b);return b;
+});
+function selectParcel(q){
+ selected=q;
+ document.querySelector('aside').hidden=!q;
+ if(q){
+  document.querySelector('#parcel').textContent='Parcelle '+q.num;
+  document.querySelector('#cadastre').hidden=!q.center;document.querySelector('#mapUzu').hidden=!q.center;document.querySelector('#cadastre').href=sigip(q.center);document.querySelector('#mapUzu').href=uzu(q);updateSaveButton();
+  category=statusKeys.indexOf(q.status);
+ }
+ renderRows();draw();
+}
+function renderRows(){
+ tabs.forEach((b,i)=>b.setAttribute('aria-pressed',String(highlightedStatus===statusKeys[i])));
+ const q=search.value.trim().toLowerCase(), scroll=results.scrollTop;
+ const list=shapes.filter(r=>r.status===statusKeys[category]&&(searchMatch(r,q,'id')||searchMatch(r,q,'address'))).sort((a,b)=>a.num.localeCompare(b.num,'fr',{numeric:true}));
+ fillIds(select,list);
+ if(selected&&list.includes(selected))select.value=selected.egrid;
+}
+function fillIds(control,list){
+ control.replaceChildren(new Option('Choisir un numéro ou EGRID',''),...list.map(r=>new Option('Parcelle '+r.num+' · '+r.egrid,r.egrid)));
+ control.disabled=!list.length;
+}
+function bindAddress(input,results,source,choose){
+ input.oninput=()=>{
+  const terms=normalizeSearch(input.value).split(' ').filter(Boolean);
+  results.replaceChildren();
+  if(!terms.length)return;
+  const matches=source().flatMap(r=>(parcelAddresses[r.egrid]||[]).filter(a=>terms.every(k=>/^\d+$/.test(k)?normalizeSearch(a).split(' ').includes(k):normalizeSearch(a).includes(k))).map(a=>[a,r])).sort((a,b)=>a[0].localeCompare(b[0],'fr',{numeric:true}));
+  if(!matches.length){results.textContent='Aucune adresse trouvée.';return}
+  for(const [a,r] of matches.slice(0,12)){const button=document.createElement('button');button.type='button';button.textContent=a+' · Parcelle '+r.num;button.onclick=()=>{input.value=a;results.replaceChildren();choose(r)};results.append(button)}
+  if(matches.length>12){const note=document.createElement('small');note.textContent='Précisez la rue ou le numéro pour affiner les résultats.';results.append(note)}
+ };
+}
+function locate(r){if(!r.center){selectParcel(r);return}s=Math.min(minimum*64,Math.max(s,minimum*8));x=map.clientWidth/2-r.cx*s;y=map.clientHeight/2-r.cy*s;selectParcel(r)}
+select.onchange=()=>{const r=shapes.find(q=>q.egrid===select.value);if(r)locate(r);else selectParcel(null)};
+bindAddress(mapAddress,document.querySelector('#mapAddressResults'),()=>shapes,locate);
+function locateSearchResult(allowPartial=false){
+ const q=normalizeSearch(search.value);if(!q){renderRows();return}
+ const exact=shapes.filter(r=>normalizeSearch(r.num)===q||normalizeSearch(r.egrid)===q);
+ const candidates=exact.length||!allowPartial?exact:shapes.filter(r=>searchMatch(r,q,'id'));
+ if(candidates.length===1){highlightedStatus=null;locate(candidates[0]);return}
+ renderRows();
+}
+search.addEventListener('input',()=>locateSearchResult());
+search.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();locateSearchResult(true)}});
+canvas.onlostpointercapture=()=>{drag=null;map.classList.remove('drag')};
+function renderParcelSections(parcel,area,zone){
+ const [kind,footprint,ratio,buildings,homes,floor,earth,slope,coverage,remaining,remainingArea,shapeStatus,cos,notes,forest,water,road,isos,danger,access,cosGap]=parcel.info[5];
+ const container=document.querySelector('#parcelSections');container.replaceChildren();
+ const empty='À vérifier';
+ const num=(v,unit='',factor=1)=>v==null||v===''?empty:Number(Number(v)*factor).toLocaleString('fr-CH',{maximumFractionDigits:2})+(unit?' '+unit:'');
+ const yesNo=v=>v==null?empty:v?'Oui':'Non';
+ function group(title,source,items){
+  const section=document.createElement('section');section.className='parcelFacts';
+  const heading=document.createElement('h3');heading.textContent=title;
+  const provenance=document.createElement('small');provenance.textContent=source;
+  const dl=document.createElement('dl');
+  for(const [label,value] of items){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value;dl.append(dt,dd)}
+  section.append(heading,provenance,dl);container.append(section);
+ }
+ group('Parcelle et bâti','CSV parcellaire · cadastre, SIGIP et registre des bâtiments',[
+  ['Adresses',(parcelAddresses[parcel.egrid]||[]).join(' · ')||empty],['Type de parcelle',kind||empty],['Surface géométrique',num(area,'m²')],['Zone dominante',zone||empty],['Emprise bâtie',num(footprint,'m²')],['Part bâtie du terrain',num(ratio,'%',100)],['Bâtiments recensés',num(buildings)],['Logements renseignés',num(homes)],['Notes patrimoniales relevées',notes.length?notes.join(', '):'Aucune note renseignée']]);
+ group('Terrain et simulations','Pente et forme par EGRID · simulation COS du classement DIW26',[
+  ['Pente médiane',num(slope,'%')],['Pixels de pente valides',num(coverage,'%')],['Part restante après retrait simulé de 6 m',num(remaining,'%')+(shapeStatus==='calcule_a_verifier'?' · contour à vérifier':'')],['Aire restante simulée',num(remainingArea,'m²')],['Marge d’emprise COS simulée',num(cos,'%')],['Écart d’emprise COS simulé',num(cosGap,'m²')]]);
+ if(cos!=null&&cos!==''&&Number(cos)===0){
+  const note=document.createElement('p');const em=document.createElement('em');
+  em.textContent=cosGap!==''&&Number(cosGap)<0?'La marge est de 0 % parce que l’emprise existante dépasse le plafond simulé. L’écart négatif ci-dessus indique de combien.':'La marge est de 0 % parce que l’emprise existante atteint le plafond simulé.';
+  note.append(em);container.lastElementChild.append(note);
+ }
+ group('Contraintes à vérifier','Données renseignées pour le module de critères',[
+  ['Pleine terre réglementaire',num(earth,'%')],['Distance à la forêt',num(forest,'m')],['Distance à un cours d’eau',num(water,'m')],['Recul depuis la route',num(road,'m')],['Danger naturel bloquant',yesNo(danger)],['Accès compliqué',yesNo(access)],['Arbre important au centre',empty],['Propriété communale',empty]]);
+}
+foncimoClicks.sheet=async()=>{
+ const target=selected;if(!target)return;
+ const fiche=await window.foncimoActualisation.fiche(target.egrid);
+ if(selected!==target)return;
+ const [area,zone,reasons,checks,url]=selected.info;
+ const status={retenue_filtres_connus:'Exploitable selon les filtres',a_verifier_filtres:'Sous conditions ou à vérifier',exclue_cible:'Exclue de la cible'}[selected.status];
+ document.querySelector('#detailTitle').textContent='Parcelle '+selected.num;
+ document.querySelector('#detailStatus').textContent=status;
+ document.querySelector('#detailFacts').textContent=selected.egrid;
+ renderParcelSections(selected,area,zone);
+ window.foncimoActualisation.contraintes(fiche,document.querySelector('#parcelSections'));
+ const omitted=new Set(['Information manquante · Pleine terre minimale (%)','Information manquante · Distance à la lisière de forêt (m)', "Information manquante · Distance au cours d'eau (m)",'Information manquante · Recul depuis la route (m)'].map(normalizeSearch));
+ const displayed=[...reasons,...checks].filter(value=>!omitted.has(normalizeSearch(value))&&!value.startsWith('Information manquante · Présence ISOS'));
+ document.querySelector('#checksHeading').hidden=!displayed.length;
+ document.querySelector('#checks').hidden=!displayed.length;
+ document.querySelector('#checks').replaceChildren(...displayed.map(value=>{const li=document.createElement('li');li.textContent=value;return li}));
+ const a=document.querySelector('#rdppf');a.hidden=!url;if(url)a.href=url;
+ document.querySelector('#detailSigip').hidden=!selected.center;document.querySelector('#detailUzu').hidden=!selected.center;document.querySelector('#detailSigip').href=sigip(selected.center);document.querySelector('#detailUzu').href=uzu(selected);updateSaveButton();document.querySelector('#details').showModal();
+};
+foncimoClicks.plus=()=>zoom(1.6);foncimoClicks.minus=()=>zoom(1/1.6);foncimoClicks.reset=reset;
+
+const workspace=document.querySelector('#workspacePanel'), layout=document.querySelector('.layout');
+const menu=[...document.querySelectorAll('[data-tab]')], heading=document.querySelector('header h1'), hint=heading.nextElementSibling;
+let activeTab='map', saved=new Set();
+try{saved=new Set(JSON.parse(localStorage.getItem('pully-dossiers')||'[]'))}catch{}
+
+let personal={};
+try{personal=JSON.parse(localStorage.getItem('pully-suivi')||'{}')}catch{}
+const fields=['decision','personalNote','nextCheck'];
+function loadFollowUp(){document.getElementById('ownerContact').checked=Boolean(personal[selected?.egrid]?.ownerContact);for(const id of fields)document.getElementById(id).value=personal[selected?.egrid]?.[id]||''}
+for(const id of fields)document.getElementById(id).oninput=()=>{
+ if(!selected||draftFolder)return;
+ (personal[selected.egrid]??={})[id]=document.getElementById(id).value;
+ try{localStorage.setItem('pully-suivi',JSON.stringify(personal))}catch{}
+};
+document.getElementById('ownerContact').onchange=e=>{
+ if(!selected||draftFolder)return;
+ (personal[selected.egrid]??={}).ownerContact=e.target.checked;
+ try{localStorage.setItem('pully-suivi',JSON.stringify(personal))}catch{}
+};
+const xml=s=>String(s??'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g,'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function workbook(rows){
+ const ns='http://schemas.openxmlformats.org/', ss=ns+'spreadsheetml/2006/main', rel=ns+'officeDocument/2006/relationships', pkg=ns+'package/2006/relationships';
+ const sheet='<worksheet xmlns="'+ss+'"><sheetData>'+rows.map((r,i)=>'<row r="'+(i+1)+'">'+r.map((v,j)=>'<c r="'+String.fromCharCode(65+j)+(i+1)+'" t="inlineStr"><is><t xml:space="preserve">'+xml(v)+'</t></is></c>').join('')+'</row>').join('')+'</sheetData></worksheet>';
+ const files={
+  '[Content_Types].xml':'<Types xmlns="'+ns+'package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',
+  '_rels/.rels':'<Relationships xmlns="'+pkg+'"><Relationship Id="rId1" Type="'+rel+'/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+  'xl/workbook.xml':'<workbook xmlns="'+ss+'" xmlns:r="'+rel+'"><sheets><sheet name="Dossiers" sheetId="1" r:id="rId1"/></sheets></workbook>',
+  'xl/_rels/workbook.xml.rels':'<Relationships xmlns="'+pkg+'"><Relationship Id="rId1" Type="'+rel+'/worksheet" Target="worksheets/sheet1.xml"/></Relationships>',
+  'xl/worksheets/sheet1.xml':sheet
+ };
+ const enc=new TextEncoder(), parts=[], directory=[];let offset=0,size=0;
+ function header(n){const bytes=new Uint8Array(n),v=new DataView(bytes.buffer);return {bytes,u16:(i,x)=>v.setUint16(i,x,true),u32:(i,x)=>v.setUint32(i,x,true)}}
+ function crc(data){let c=-1;for(const v of data){c^=v;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^-1)>>>0}
+ for(const [name,text] of Object.entries(files)){
+  const key=enc.encode(name), data=enc.encode(text), checksum=crc(data), l=header(30), c=header(46);
+  l.u32(0,0x04034b50);l.u16(4,20);l.u16(12,33);l.u32(14,checksum);l.u32(18,data.length);l.u32(22,data.length);l.u16(26,key.length);
+  c.u32(0,0x02014b50);c.u16(4,20);c.u16(6,20);c.u16(14,33);c.u32(16,checksum);c.u32(20,data.length);c.u32(24,data.length);c.u16(28,key.length);c.u32(42,offset);
+  parts.push(l.bytes,key,data);directory.push(c.bytes,key);offset+=30+key.length+data.length;size+=46+key.length;
+ }
+ const end=header(22),n=Object.keys(files).length;
+ end.u32(0,0x06054b50);end.u16(8,n);end.u16(10,n);end.u32(12,size);end.u32(16,offset);
+ return new Blob([...parts,...directory,end.bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function exportDossiers(records,name){
+ const rows=[['Numéro de parcelle','EGRID','Décision','Notes','Prochaine vérification','Contact propriétaire'],...records.map(r=>[r.num,r.egrid,...fields.map(id=>personal[r.egrid]?.[id]||''),personal[r.egrid]?.ownerContact?'Oui':'Non'])];
+ const url=URL.createObjectURL(workbook(rows)),a=document.createElement('a');
+ a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+foncimoClicks.exportParcel=()=>{if(selected)exportDossiers([selected],'parcelle-'+selected.num.replace(/[^a-z0-9-]/gi,'-')+'.xlsx')};
+
+const saveButton=document.querySelector('#saveParcel');
+function persistSaved(){try{localStorage.setItem('pully-dossiers',JSON.stringify([...saved]))}catch{}}
+function saveRecord(r){saved.add(r.egrid);persistSaved();updateSaveButton()}
+function updateSaveButton(){
+ const exists=saved.has(selected?.egrid);
+ saveButton.textContent=exists?'Retirer des dossiers':'Sauvegarder le dossier';
+ const b=document.querySelector('#mapSave');b.textContent=exists?'Sauvegardé ✓':'Sauvegarder';b.disabled=exists;
+}
+foncimoClicks.mapSave=()=>{if(selected)saveRecord(selected)};
+foncimoClicks.saveParcel=()=>{if(!selected)return;const e=selected.egrid;if(saved.has(e)){saved.delete(e);persistSaved();updateSaveButton()}else saveRecord(selected)};
+const createFolder=document.querySelector('#createFolder'),folderQuery=document.querySelector('#folderQuery'),folderChoices=document.querySelector('#folderChoices');
+function openCreateFolder(){folderQuery.value='';folderChoices.textContent='Saisissez un numéro ou un EGRID.';createFolder.showModal();folderQuery.focus()}
+folderQuery.oninput=()=>{
+ const q=folderQuery.value.trim().toLowerCase();folderChoices.replaceChildren();if(!q)return;
+ const matches=shapes.filter(r=>searchMatch(r,q,'id')).slice(0,15);
+ if(!matches.length){folderChoices.textContent='Aucune parcelle trouvée.';return}
+ for(const r of matches){const b=document.createElement('button');b.textContent='Parcelle '+r.num+' · '+r.egrid;b.onclick=()=>{createFolder.close();openFolder(r,!saved.has(r.egrid))};folderChoices.append(b)}
+};
+let refreshDossiers;
+const clearFoldersDialog=document.querySelector('#confirmClearFolders');
+foncimoClicks.clearFoldersConfirm=()=>{
+ saved.clear();persistSaved();updateSaveButton();clearFoldersDialog.close();refreshDossiers?.();
+};
+
+const folderDetails=document.querySelector('#folderDetails');
+let draftFolder=false;
+function openFolder(r,draft=false){
+ selected=r;draftFolder=draft;document.querySelector('#exportParcel').hidden=draft;document.querySelector('#removeFolder').hidden=draft;document.querySelector('#folderTitle').textContent='Dossier · Parcelle '+r.num;
+ document.querySelector('#folderIdentity').textContent=r.egrid+' · '+(r.info[0]?Number(r.info[0]).toLocaleString('fr-CH',{maximumFractionDigits:2})+' m²':'Surface à vérifier');
+ loadFollowUp();folderDetails.showModal();
+}
+foncimoClicks.commitFolder=()=>{
+ if(!selected)return;
+ personal[selected.egrid]={...personal[selected.egrid],...Object.fromEntries(fields.map(id=>[id,document.getElementById(id).value])),ownerContact:document.getElementById('ownerContact').checked};
+ try{localStorage.setItem('pully-suivi',JSON.stringify(personal))}catch{}
+ saveRecord(selected);folderDetails.close();
+};
+folderDetails.addEventListener('close',()=>{draftFolder=false;if(activeTab==='saved')refreshDossiers?.()});
+const removeDialog=document.querySelector('#confirmRemove');
+let pendingRemoval;
+function askRemove(r,onRemoved){
+ pendingRemoval={r,onRemoved};
+ document.querySelector('#removeSummary').textContent='Parcelle '+r.num+' · Les notes de suivi sont conservées si vous ajoutez à nouveau ce dossier.';
+ removeDialog.showModal();
+}
+foncimoClicks.confirmRemoveButton=()=>{
+ if(!pendingRemoval)return;
+ const {r,onRemoved}=pendingRemoval;
+ saved.delete(r.egrid);persistSaved();updateSaveButton();removeDialog.close();onRemoved?.();
+};
+removeDialog.addEventListener('close',()=>{pendingRemoval=null});
+foncimoClicks.removeFolder=()=>{if(selected)askRemove(selected,()=>folderDetails.close())};
+function trashButton(r,update){
+ const b=document.createElement('button');b.type='button';b.className='trashButton';
+ b.setAttribute('aria-label','Retirer le dossier de la parcelle '+r.num);b.title='Retirer des dossiers';
+ b.innerHTML='<svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v6m4-6v6"/></svg>';
+ b.onclick=()=>askRemove(r,update);return b;
+}
+
+document.querySelector('#details').addEventListener('close',()=>{if(activeTab==='saved')refreshDossiers?.()});
+
+function parseFolderCsv(text){
+ text=text.replace(/^\uFEFF/,'');
+ const header=text.split(/\r?\n/,1)[0], sep=header.includes(';')?';':header.includes('\t')?'\t':',';
+ const rows=[];let row=[],value='',quoted=false;
+ for(let i=0;i<text.length;i++){
+  const c=text[i];
+  if(quoted){if(c==='"'&&text[i+1]==='"'){value+='"';i++}else if(c==='"')quoted=false;else value+=c;continue}
+  if(c==='"'&&!value){quoted=true;continue}
+  if(c===sep){row.push(value);value='';continue}
+  if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(value);if(row.some(v=>v.trim()))rows.push(row);row=[];value='';continue}
+  value+=c;
+ }
+ if(quoted)throw Error('Guillemets non fermés dans le CSV.');
+ row.push(value);if(row.some(v=>v.trim()))rows.push(row);
+ return rows;
+}
+async function importFolders(file,message){
+ if(!file)return;
+ try{
+  const [header,...rows]=parseFolderCsv(typeof file==='string'?file:await file.text());
+  if(!header)throw Error('Le fichier est vide.');
+  const keys=header.map(normalizeSearch), index=keys.indexOf('egrid');
+  if(index<0)throw Error('La colonne EGRID est obligatoire.');
+  const known=new Set(shapes.map(r=>r.egrid)),seen=new Set();
+  const columns=[['decision','decision'],['notes','personalNote'],['prochaine verification','nextCheck'],['contact proprietaire','ownerContact']];
+  let added=0,updated=0,skipped=0,invalid=0;const ignored=[];
+  for(const row of rows){
+   const e=(row[index]||'').trim().toUpperCase();
+   if(!known.has(e)||seen.has(e)){skipped++;if(ignored.length<5)ignored.push(e||'EGRID vide');continue}
+   seen.add(e);const d={...(personal[e]||{})};
+   for(const [key,field] of columns){
+    const i=keys.indexOf(key),v=i<0?'':(row[i]||'').trim();if(!v)continue;
+    if(field==='ownerContact'){
+     const n=normalizeSearch(v);if(['oui','non','true','false','1','0'].includes(n))d[field]=['oui','true','1'].includes(n);else invalid++;
+    }else if(field==='decision'){
+     const option=[...document.querySelector('#decision').options].find(o=>normalizeSearch(o.value)===normalizeSearch(v));
+     if(option)d[field]=option.value;else invalid++;
+    }else d[field]=v;
+   }
+   personal[e]=d;if(saved.has(e))updated++;else{saved.add(e);added++}
+  }
+  persistSaved();try{localStorage.setItem('pully-suivi',JSON.stringify(personal))}catch{}
+  const all=document.querySelector('#exportAll');if(all)all.disabled=!saved.size;
+  refreshDossiers?.();
+  message.textContent=added+' ajoutés · '+updated+' mis à jour · '+skipped+' lignes ignorées'+(ignored.length?' ('+ignored.join(', ')+')':'')+(invalid?' · '+invalid+' valeurs non reconnues ignorées':'')+'.';
+ }catch(e){message.textContent='Import impossible · '+e.message}
+}
+
+function renderInline(onlySaved){
+ workspace.innerHTML='<h2>'+ (onlySaved?'Dossiers sauvegardés':'Liste des parcelles')+'</h2>'+(onlySaved?'<p style="padding:12px;background:#fff3d6;border-radius:8px"><strong>Usage personnel et non commercial</strong></p>':'')+'<input id="inlineSearch" aria-label="Filtrer les choix" placeholder="Numéro, EGRID ou adresse"><div class="inlineChoices"><label>Numéro de parcelle ou EGRID<select id="listIdSelect"></select></label><div class="addressSearch"><label>Rechercher une adresse<input id="listAddressSearch" placeholder="Rue et numéro"></label><div id="listAddressResults" class="addressResults" aria-live="polite"></div></div></div><div id="listFilters"></div><select id="inlineStatus" aria-label="Statut"><option value="">Tous les statuts</option><option value="0">Exploitables</option><option value="1">Sous conditions ou à vérifier</option><option value="2">Exclues</option></select><p id="inlineCount"></p><div id="inlineRows"></div>';
+ if(onlySaved){const b=document.createElement('button');b.id='exportAll';b.textContent='Exporter mes dossiers (.xlsx)';b.disabled=!saved.size;b.onclick=()=>exportDossiers(shapes.filter(r=>saved.has(r.egrid)),'dossiers-pully.xlsx');workspace.querySelector('h2').after(b);const create=document.createElement('button');create.textContent='Créer un dossier';create.onclick=openCreateFolder;b.before(create);
+ const clear=document.createElement('button');clear.id='clearFolders';clear.type='button';clear.textContent='Supprimer tous les dossiers';clear.disabled=!saved.size;b.after(clear);
+ clear.onclick=()=>{document.querySelector('#clearFoldersSummary').textContent=saved.size+' dossier'+(saved.size===1?' sera retiré.':'s seront retirés.');clearFoldersDialog.showModal()};
+
+ const importer=document.createElement('details');importer.className='folderImport';
+ importer.innerHTML='<summary>Importer un CSV</summary><label>Choisir un fichier CSV<input type="file" accept=".csv,text/csv"></label><label>Ou coller le contenu du CSV<textarea style="resize:none" rows="4" placeholder="EGRID;Décision;Notes"></textarea></label><button type="button" onclick="foncimoClicks.importFolders(event)">Importer le texte</button><p role="status"></p>';
+ b.after(importer);
+ const file=importer.querySelector('input'), paste=importer.querySelector('textarea'), message=importer.querySelector('[role=status]');
+ file.onchange=()=>{const f=file.files[0];file.value='';if(f)importFolders(f,message)};
+ foncimoClicks.importFolders=()=>{if(!paste.value.trim()){message.textContent='Collez le contenu du CSV.';return}importFolders(paste.value,message)};
+ const contact=document.createElement('label');contact.className='folderFilter';contact.textContent='Contact propriétaire ';
+ const control=document.createElement('select');control.id='contactFilter';control.append(new Option('Tous',''),new Option('Contact coché','yes'),new Option('Contact non coché','no'));contact.append(control);b.after(contact);
+ const decisionLabel=document.createElement('label');decisionLabel.className='folderFilter';decisionLabel.textContent='Décision ';
+ const decision=document.createElement('select');decision.id='decisionFilter';decision.append(new Option('Toutes les décisions',''),new Option('Sans décision','__none__'));
+ for(const option of document.querySelector('#decision').options)if(option.value)decision.append(new Option(option.text,option.value));
+ decisionLabel.append(decision);contact.after(decisionLabel);
+
+ }
+ const query=workspace.querySelector('#inlineSearch'), filter=workspace.querySelector('#inlineStatus'), list=workspace.querySelector('#inlineRows');
+ function update(){
+  const scrollTop=list.scrollTop;
+  const q=query.value.trim().toLowerCase(),k=filter.value;
+  const contact=workspace.querySelector('#contactFilter')?.value;const decision=workspace.querySelector('#decisionFilter')?.value;
+  const rows=shapes.filter(r=>(!onlySaved||saved.has(r.egrid))&&(!contact||Boolean(personal[r.egrid]?.ownerContact)===(contact==='yes'))&&(!decision||(personal[r.egrid]?.decision||'__none__')===decision)&&(!k||r.status===statusKeys[Number(k)])&&(searchMatch(r,q,'id')||searchMatch(r,q,'address'))).sort((a,b)=>statusKeys.indexOf(a.status)-statusKeys.indexOf(b.status)||a.num.localeCompare(b.num,'fr',{numeric:true}));
+  fillIds(workspace.querySelector('#listIdSelect'),rows);
+  const frag=document.createDocumentFragment();
+  for(const r of rows){const i=statusKeys.indexOf(r.status),b=document.createElement('button');b.className='status'+i+(i===2||matchesCriteria(r)?'':' outsideFilters');b.textContent=(q&&matchingAddress(r,q)?matchingAddress(r,q)+' · ':'')+'Parcelle '+r.num+' · '+(r.info[0]?Number(r.info[0]).toLocaleString('fr-CH',{maximumFractionDigits:2})+' m²':'Surface à vérifier')+' · '+names[i]+(matchesCriteria(r)?'':' · Hors filtres')+'   →';b.onclick=()=>{selected=r;if(onlySaved)openFolder(r);else document.querySelector('#sheet').click()};const row=document.createElement('div');row.className='folderRow';row.append(b);if(onlySaved){const details=document.createElement('small');const d=personal[r.egrid]||{};details.textContent=[r.egrid,d.decision,d.nextCheck?'À vérifier : '+d.nextCheck:'',d.ownerContact?'Contact propriétaire ✓':'Contact propriétaire non coché'].filter(Boolean).join(' · ');row.append(trashButton(r,update),details)}else if(saved.has(r.egrid)){const badge=document.createElement('span');badge.className='savedBadge';badge.textContent='Sauvegardé ✓';row.append(badge,trashButton(r,update))}else{const save=document.createElement('button');save.textContent='Sauvegarder';save.onclick=()=>{saveRecord(r);update()};row.append(save)}frag.append(row)}
+  list.replaceChildren(frag);list.scrollTop=scrollTop;const exportButton=workspace.querySelector('#exportAll');if(exportButton)exportButton.disabled=!saved.size;const clearButton=workspace.querySelector('#clearFolders');if(clearButton)clearButton.disabled=!saved.size;workspace.querySelector('#inlineCount').textContent=rows.length+' parcelles'+(onlySaved&&!rows.length?' · Sauvegardez une parcelle depuis sa fiche.':'');
+ }
+ const show=r=>{selected=r;if(onlySaved)openFolder(r);else document.querySelector('#sheet').click()};
+ const idSelect=workspace.querySelector('#listIdSelect');
+ idSelect.onchange=()=>{const r=shapes.find(q=>q.egrid===idSelect.value);if(r)show(r)};
+ bindAddress(workspace.querySelector('#listAddressSearch'),workspace.querySelector('#listAddressResults'),()=>shapes.filter(r=>(!onlySaved||saved.has(r.egrid))&&(!filter.value||r.status===statusKeys[Number(filter.value)])),show);
+ query.oninput=update;filter.onchange=update;const contact=workspace.querySelector('#contactFilter');if(contact)contact.onchange=update;const decision=workspace.querySelector('#decisionFilter');if(decision)decision.onchange=update;if(onlySaved){refreshDossiers=update;workspace.querySelector('#listFilters').hidden=true}else mountFilters(workspace.querySelector('#listFilters'),update);update();
+}
+function navigateTab(button){
+ activeTab=button.dataset.tab;menu.forEach(b=>{if(b===button)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ const isMap=activeTab==='map';document.querySelector('#mapCredit').hidden=!isMap;layout.hidden=!isMap;workspace.hidden=isMap;heading.hidden=!isMap;if(hint)hint.hidden=!isMap;
+ if(isMap){draw();return}
+ if(activeTab==='list'||activeTab==='saved'){renderInline(activeTab==='saved');return}
+ workspace.innerHTML='<h2>Données</h2><button id="refreshData" type="button" onclick="foncimoActualisation.start()">Actualiser les données</button><p id="refreshStatus" role="status"></p>';
+ const buttonRefresh=workspace.querySelector('#refreshData');
+ window.foncimoActualisation.mount(buttonRefresh,workspace.querySelector('#refreshStatus'));
+
+};
+
+
+const filterMeasures={};
+let activeCriteria=new Set();
+let thresholds={area:600,footprint:20,slope:25};
+const zoneOptions=[['villas','Zone de villas','zone de villas'],['low','Faible densité','zone de faible densite'],['medium','Moyenne densité','zone de moyenne densite']];
+const thresholdOptions=[
+ {key:'area',name:'Surface minimale',unit:'m²',min:0,max:5000,step:25},
+ {key:'footprint',name:'Emprise bâtie maximale',unit:'%',min:0,max:100,step:1},
+ {key:'slope',name:'Pente médiane maximale',unit:'%',min:0,max:100,step:1}
+];
+function matchesCriteria(r){
+ const zones=zoneOptions.filter(([k])=>activeCriteria.has(k));
+ if(zones.length&&!zones.some(([,,value])=>normalizeSearch(r.info[1])===value))return false;
+ const [footprint,slope]=filterMeasures[r.egrid]||[];
+ return (!activeCriteria.has('area')||Boolean(r.info[0])&&Number(r.info[0])>=thresholds.area)
+ &&(!activeCriteria.has('footprint')||footprint!=null&&Number(footprint)*100<=thresholds.footprint)
+ &&(!activeCriteria.has('slope')||slope!=null&&Number(slope)<=thresholds.slope);
+}
+const filterPanels=new Set();
+function mountFilters(target,refresh){
+ const d=document.createElement('details');d.className='criteriaMenu';
+ const summary=document.createElement('summary');d.append(summary);
+ const form=document.createElement('form'),checks=new Map(),sliders=new Map();form.noValidate=true;
+ function group(title){const g=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=title;g.append(legend);form.append(g);return g}
+ function checkbox(key,label,g){const l=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.value=key;l.append(c,label);g.append(l);checks.set(key,c);return c}
+ const zones=group('Zone dominante');for(const [key,label] of zoneOptions)checkbox(key,label,zones);
+ const measurements=group('Seuils à appliquer');
+ for(const f of thresholdOptions){
+  const item=document.createElement('div');item.className='thresholdControl';measurements.append(item);
+  const check=checkbox(f.key,f.name,item);
+  const line=document.createElement('div');line.className='sliderLine';
+  const input=document.createElement('input');input.type='range';input.min=f.min;input.max=f.max;input.step=f.step;input.setAttribute('aria-label',f.name);
+  const out=document.createElement('output');line.append(input,out);item.append(line);
+  const update=()=>{out.textContent=Number(input.value).toLocaleString('fr-CH')+' '+f.unit;input.setAttribute('aria-valuetext',out.textContent)};
+  input.oninput=()=>{check.checked=true;update()};sliders.set(f.key,{input,update});
+ }
+ const hint=document.createElement('small');hint.textContent='Le rouge indique un écart aux filtres ou une mesure manquante.';form.append(hint);
+ const actions=document.createElement('div');actions.className='filterActions';const apply=document.createElement('button');apply.textContent='Appliquer';const clear=document.createElement('button');clear.type='button';clear.textContent='Retirer les filtres';actions.append(apply,clear);form.append(actions);d.append(form);target.append(d);
+ const sync=()=>{summary.textContent='Filtres'+(activeCriteria.size?' · '+activeCriteria.size+' actifs':'');for(const [k,c] of checks)c.checked=activeCriteria.has(k);for(const [k,v] of sliders){v.input.value=thresholds[k];v.update()}};
+ function commit(keys){activeCriteria=new Set(keys);for(const entry of filterPanels){if(!entry.element.isConnected){filterPanels.delete(entry);continue}entry.sync();entry.refresh()}draw()}
+ form.onsubmit=e=>{e.preventDefault();thresholds=Object.fromEntries([...sliders].map(([k,v])=>[k,Number(v.input.value)]));commit([...checks].filter(([,c])=>c.checked).map(([k])=>k));d.open=false};
+ clear.onclick=()=>{commit([]);d.open=false};d.addEventListener('toggle',()=>{if(d.open)sync()});
+ filterPanels.add({element:d,sync,refresh});sync();
+}
+mountFilters(document.querySelector('#mapFilters'),renderRows);renderRows();
+
+new ResizeObserver(()=>{if(layout.hidden)return;size();if(s<minimum)reset();else draw()}).observe(map);reset();
+</script><script src="/actualisation.js"></script></html>

@@ -12,7 +12,7 @@ sans changer ses règles et conserve les observations nouvelles séparément.
 
 ## Installation et démarrage
 
-Depuis la racine, Python 3.10+ et un environnement virtuel actif :
+Depuis la racine, Python 3.12+ et un environnement virtuel actif :
 
 ```bash
 python -m pip install -r API/requirements_contraintes.txt
@@ -24,15 +24,39 @@ Le serveur écoute uniquement sur la machine locale, port 8000 par défaut.
 `API/versions/` (déjà ignoré par Git). `--contours` sélectionne les contours ESRI
 MN95 ; par défaut `data/parcelles/source_esri_lv95.json`.
 
-Le serveur utilise une **base de référence choisie côté serveur**. Il actualise
-les contraintes ISOS/dangers ; il ne relance pas toutes les collectes GEO.vd/SIGIP
-ni ne régénère les contours du script du collègue à chaque clic. Pour une nouvelle
-base, fournir la nouvelle référence et ses contours correspondants. Les valeurs
-de pleine terre et autres inconnues ne sont pas inventées pendant l'import.
+L'interface fournie est maintenant intégrée dans `interface/carte-pully.html`.
+Ouvrir **http://127.0.0.1:8000/** après démarrage du serveur. Ouvrir le HTML
+avec `file://` ou l'importer dans Figma ne lance pas le serveur Python.
 
-Ce serveur constitue la connexion à appeler depuis l'interface codée. Aucune
-interface web n'existe actuellement dans ce dépôt : aucun bouton visuel n'a donc
-été modifié. Figma ne lance pas directement ce serveur.
+Le bouton utilise `interface/actualisation.js` et le serveur de cette commande :
+
+1. `collecte_application.py` charge une instance isolée du script inchangé du collègue,
+   reconstruit les 76 colonnes depuis GEO.vd/SIGIP et capture les contours MN95 reçus.
+2. Il contrôle les lots ArcGIS contre les inventaires d'IDs, relit ces inventaires et
+   compare les effectifs WFS avec `resultType=hits`. Une pagination ou un effectif
+   non confirmé fait échouer l'opération, sans activation partielle.
+3. Les pentes sont recalculées sur les contours actualisés **avec le raster local**.
+   Le téléchargement automatique d'un nouveau millésime du modèle de terrain reste
+   à intégrer ; l'opération le signale dans les alertes.
+4. Les intersections ISOS/dangers sont recalculées ; les règles existantes de
+   `criteres_category.py` sont appliquées sans changement. Les calculs de logements,
+   forme et COS réutilisent `classification.py` et `geometrie.py` pour les fiches.
+5. La version candidate, son export d'interface et ses fiches sont contrôlés puis
+   activés ensemble. Les fichiers source suivis par Git ne sont pas écrasés.
+
+**Limite vérifiée le 4 novembre 2026 :** GEO.vd répond, mais le proxy de cet
+ environnement cloud refuse `www.sigip.ch` (tunnel HTTP 403 ; domaine absent de la
+liste autorisée). Le clic et les contrats sont testés avec des données synthétiques ;
+**une actualisation complète réelle GEO.vd + SIGIP n'est pas validée ici**.
+L'opération échoue explicitement si SIGIP n'est pas joignable et conserve la version
+valide. L'autorisation réseau du domaine SIGIP et les conditions de réutilisation
+restent à vérifier pour le lieu d'exécution retenu. Aucun hébergement distant n'est
+créé et aucun fichier Figma distant n'est modifié.
+
+Pour une installation ayant déjà une `version_active.json` produite avant cet
+export d'interface, garder cette sauvegarde et démarrer avec un nouveau dossier
+ignoré, par exemple `--stockage API/versions/interface`. Les anciennes versions
+ne sont pas enrichies avec des données d'une autre date.
 
 En développement, si l'interface est servie sur une autre origine, ajouter par
 exemple `--origine-interface http://localhost:5173`. Seules les origines déclarées
@@ -43,6 +67,8 @@ Une mise en service distante avec authentification reste un chantier séparé.
 
 | Route | Réponse et rôle |
 |---|---|
+| `GET /` | Interface HTML intégrée, servie depuis la même origine que l’API |
+| `GET /application/donnees?version=…` | Export borné de Pully pour Carte et Liste : version, total, parcelles, adresses et mesures ; fiches détaillées via EGRID |
 | `POST /actualisations` | Corps JSON `{}` ; 202 et `operation_id` pour une nouvelle tâche ; 200 et le même ID si une tâche serveur est déjà en cours |
 | `GET /actualisations/etat` | Contenu actuel de `etat_actualisation.json` |
 | `GET /actualisations/{operation_id}` | Historique/suivi de cette opération, sans le confondre avec une suivante |
@@ -61,9 +87,9 @@ du navigateur. Les EGRID et versions inconnus donnent 404. Une actualisation CLI
 externe déjà en cours, qui ne possède pas d'identifiant serveur, donne 409 et se
 suit via le fichier d'état existant ; elle n'est pas lancée une deuxième fois.
 
-## Appel du bouton dans la future interface
+## Appel du bouton
 
-Exemple de raccordement, pas une modification d'un frontend absent :
+Le raccordement effectif est dans `interface/actualisation.js`. Exemple minimal du contrat :
 
 ```javascript
 async function actualiserDonnees(api = "") {
@@ -160,7 +186,7 @@ verrou CLI externe ou un processus vivant.
 Le contrat existant est conservé (`etape`, `sources`, `alertes`, `bilan`, dates,
 `fichier`, `erreur`) et enrichi dans le nouveau service :
 
-- `operation_id`, `mode: "contraintes"`, `version_active` ;
+- `operation_id`, `mode: "contraintes"` ou `"application"` (collecte complète), `version_active` ;
 - `statut` : `en_cours`, `termine`, **`aucun_changement`**, `erreur` ;
 - étapes supplémentaires : `Validation de la version candidate`, `Activation` ;
 - bilan comprenant parcelles, ajoutées, absentes et états des croisements.
@@ -169,7 +195,7 @@ Les historiques d'opérations sont sous `operations/`. Le CLI du collègue garde
 son comportement et son contrat d'origine. Le fichier de verrou n'est partagé
 que si le CLI et le serveur utilisent le même `--sortie` / `--stockage`.
 
-## Vérification réelle du 4 novembre 2026
+## Vérification réelle du premier lot ISOS/dangers du 4 novembre 2026
 
 Test effectué via `POST /actualisations`, attente via l'API, activation d'une
 version **locale de validation**, puis lecture de la fiche 607. Base de référence :
@@ -218,15 +244,51 @@ restent un export local de contrôle, pas de nouveaux fichiers bruts publiés da
 Ces champs sont déjà renvoyés avec `valeur=null`, unité, état et motif ; aucune
 distance non calculée ou absence d'arbre n'est affichée comme zéro/false.
 
+## Export de l’interface et conservation des données
+
+`GET /application/donnees` sert une seule version et un total contrôlé. Les deux
+vues utilisent le même tableau et ouvrent `GET /parcelles/{EGRID}?version=...`.
+La fiche expose maintenant aussi `donnees` (attributs du CSV) et `indicateurs`
+(simulations et logements déclarés, calculés par le code existant). Les 2 672 lignes
+restent consultables, y compris les 19 contours invalides : affichage cartographique
+indicatif du contour brut, simulation de forme inconnue, sans réparation silencieuse.
+Les parcelles absentes d'une nouvelle collecte sont conservées avec l'alerte
+`absente_derniere_collecte_a_examiner` ; leur absence ne signifie pas suppression.
+
+Les champs manuels du CSV (`decision_conti`, `motif_conti`, `type_bati_valide`,
+`surface_plancher_verifiee_m2`, `pleine_terre_reglementaire_m2`) sont conservés par
+EGRID. Les annotations serveur sont séparées dans `annotations_expert.json`.
+Les dossiers du prototype restent dans le stockage du navigateur : exporter les
+dossiers avant de changer de domaine ou de port. Aucune synchronisation de ces
+notes vers un nouveau compte ou un autre navigateur n'est ajoutée.
+
 ## Tests
 
 ```bash
 python -m unittest discover -s API -p "test_*contraintes.py" -v
+python -m unittest discover -s API -p "test_collecte_application.py" -v
 python API/test_actualiser_pully.py pully_parcelles.csv
+# Facultatif : Playwright et Chromium installés
+RUN_BROWSER_TESTS=1 python -m unittest discover -s tests -p "test_interface_actualisation.py" -v
 ```
 
-18 tests ciblés passent à ce stade : exporteur existant + nouveau service. Ils
+Les tests du service, de l’adaptateur et le parcours Chromium couvrent : exporteur existant + nouveau service. Ils
 couvrent notamment recouvrement partiel, zéro confirmé, hors couverture, réponse
 tronquée, calcul/activation en échec, absence conservée, annotations préservées,
 double clic, aucun changement et vraie requête HTTP locale sur données synthétiques.
 Le contrôle de référence de l'actualiseur est exécuté séparément, sans le modifier.
+
+### Vérification de cette intégration
+
+- 20 tests export/service + 3 tests de l’adaptateur : passent.
+- Parcours Chromium : clic au clavier, requête POST, suivi, fiche commune, échec
+  conservant la version précédente, notes locales conservées, écran étroit.
+- Export complet : 2 672 lignes ; parcelle 607 = 10 logements déclarés, avec
+  divergence de rattachement vers 608.
+- Audit statique de l’interface : aucune erreur ; syntaxe JavaScript contrôlée.
+- Contrôle du CSV par le script de l’équipe : passe.
+- Tests historiques du répertoire `tests/` : 19 assertions échouent déjà sur
+  `HEAD` avant cette intégration (15 tests, dont des sous-tests). Les fichiers
+  `test_criteres_priorites.py` et `test_zonage_eliminatoire.py` attendent les
+  anciens libellés `retenue/exclue/a_verifier`, remplacés par `vert/jaune/rouge`.
+  Ces règles et tests existants ne sont pas modifiés dans ce lot.

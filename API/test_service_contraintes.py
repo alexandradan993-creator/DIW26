@@ -115,6 +115,34 @@ class ServiceTests(unittest.TestCase):
         self.assertIn('absente_derniere_collecte_a_examiner',row['alertes'])
         self.assertEqual(self.service.liste()['total'],2)
 
+    def test_full_collection_updates_shared_data_without_overwriting_source(self):
+        original=self.reference.read_bytes()
+        def collect(stage,state,previous):
+            rows=[dict(row) for row in self.rows]
+            rows[0]['surface_geometrique_m2']='2000'
+            with (stage/'parcelles.csv').open('w',newline='') as stream:
+                writer=csv.DictWriter(stream,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
+        self.service.base_collector=collect
+        with patch('donnees_interface.derivations'):
+            operation=self.service.start(background=False)
+        self.assertEqual(self.service.status(operation['operation_id'])['statut'],'termine')
+        data=self.service.interface()
+        row=next(r for r in data['parcels'] if r[1]=='E1')
+        fiche=self.service.fiche('E1',data['version'])
+        self.assertEqual(row[6][0],2000)
+        self.assertEqual(fiche['donnees']['surface_geometrique_m2'],'2000')
+        self.assertEqual(fiche['classement']['surface_m2'],2000)
+        self.assertEqual(self.reference.read_bytes(),original)
+
+    def test_full_collection_failure_keeps_previous_interface(self):
+        old=self.service.active();before=self.service.interface()
+        def fail(stage,state,previous):raise RuntimeError('SIGIP inaccessible')
+        self.service.base_collector=fail
+        operation=self.service.start(background=False)
+        self.assertEqual(self.service.status(operation['operation_id'])['statut'],'erreur')
+        self.assertEqual(self.service.active(),old)
+        self.assertEqual(self.service.interface(),before)
+
     def test_same_running_operation_returned_and_old_version_readable(self):
         entered=threading.Event();release=threading.Event();old=self.service.active()
         def slow(layer,bbox):

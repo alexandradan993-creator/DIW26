@@ -37,7 +37,17 @@ def make_server(service,host='127.0.0.1',port=8000,origins=()):
             url=urlsplit(self.path);query=parse_qs(url.query)
             version=query.get('version',[None])[0]
             try:
-                if url.path=='/versions/active':
+                if url.path in ('/','/carte-pully.html','/actualisation.js'):
+                    name='actualisation.js' if url.path.endswith('.js') else 'carte-pully.html'
+                    body=(Path(__file__).resolve().parents[1]/'interface'/name).read_bytes()
+                    self.send_response(200)
+                    self.send_header('Content-Type',('text/javascript' if name.endswith('.js') else 'text/html')+'; charset=utf-8')
+                    self.send_header('Content-Length',str(len(body)))
+                    self.send_header('Cache-Control','no-store')
+                    self.end_headers();self.wfile.write(body)
+                elif url.path=='/application/donnees':
+                    self.answer(200,service.interface(version))
+                elif url.path=='/versions/active':
                     self.answer(200,{'version':service.active()})
                 elif url.path=='/actualisations/etat':
                     self.answer(200,service.status())
@@ -87,7 +97,8 @@ def main():
     parser.add_argument('--stockage',type=Path)
     parser.add_argument('--origine-interface',action='append',default=[],help="origine précise du frontend de développement")
     args=parser.parse_args()
-    service=UpdateService(args.stockage,args.reference,args.contours)
+    from collecte_application import collecter
+    service=UpdateService(args.stockage,args.reference,args.contours,base_collector=collecter)
     for origin in args.origine_interface:
         parsed=urlsplit(origin)
         if parsed.scheme not in ('http','https') or not parsed.netloc or parsed.path or parsed.query or parsed.fragment:

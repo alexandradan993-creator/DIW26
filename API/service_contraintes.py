@@ -57,13 +57,14 @@ class OperationState(Etat):
 
 
 class UpdateService:
-    def __init__(self,storage=None,reference=None,contours=None,config=None,slopes=None,collector=None):
+    def __init__(self,storage=None,reference=None,contours=None,config=None,slopes=None,collector=None,base_collector=None):
         self.storage=Path(storage or ROOT/'API/versions')
         self.reference=Path(reference or ROOT/'pully_parcelles.csv')
         self.contours=Path(contours or ROOT/'data/parcelles/source_esri_lv95.json')
         self.config=Path(config or ROOT/'code/criteres.json')
         self.slopes=Path(slopes or ROOT/'data/pentes_parcelles/pentes_parcelles.csv')
         self.collector=collector
+        self.base_collector=base_collector
         self.storage.mkdir(parents=True,exist_ok=True)
         self.pointer=self.storage/'version_active.json'
         self.lock=self.storage/'actualisation.lock'
@@ -105,13 +106,30 @@ class UpdateService:
             version='initiale-'+uuid4().hex
             folder=self.storage/version;folder.mkdir()
             fiches=self._fiches(rows,{}, {},cfg,version)
-            write_json(folder/'fiches.json',fiches)
             write_json(folder/'parcelles.json',{r['egrid']:r for r in rows})
+            (folder/'contours.json').write_bytes(self.contours.read_bytes())
+            self._interface(folder, rows, fiches, self.contours, self.slopes)
+            write_json(folder/'fiches.json',fiches)
             write_json(folder/'manifest.json',dict(version=version,empreinte=None,
                 mode='base_initiale_contraintes_inconnues',regles=cfg,date_creation=maintenant()))
             write_json(self.pointer,{'version':version})
         finally:
             self.lock.unlink(missing_ok=True)
+
+    def _interface(self,folder,rows,fiches,contours,slopes):
+        from donnees_interface import preparer
+        config_path=folder/'simulation.json'
+        if not config_path.exists():
+            config_path.write_bytes((ROOT/'code/filtres.json').read_bytes())
+        preparer(folder,rows,fiches,contours,slopes,json.loads(config_path.read_text()))
+
+    def interface(self,version=None):
+        version=version or self.active()
+        folder=self.version_path(version)
+        if not (folder/'interface.json').exists():
+            # Migration d'une version antérieure : ne pas y ajouter de données actuelles.
+            raise KeyError('Version antérieure sans export interface ; lancer une actualisation')
+        return immutable_json(str(folder/'interface.json'))
 
     def active(self):
         return json.loads(self.pointer.read_text())['version']
@@ -217,6 +235,12 @@ class UpdateService:
                 config=stage/'criteres.json';config.write_bytes(self.config.read_bytes())
                 slope_snapshot=stage/'pentes.csv'
                 if self.slopes.exists():slope_snapshot.write_bytes(self.slopes.read_bytes())
+                previous_folder=self.version_path(previous)
+                old=json.loads((previous_folder/'parcelles.json').read_text())
+                if self.base_collector:
+                    self.base_collector(stage,state,old)
+                    from donnees_interface import derivations
+                    derivations(stage,state)
                 rows=read_csv(reference);cfg=self.criteria.load_criteria(config)
                 destination,report,crossings=export_observations(reference,contours,stage/'croisements',state,self.collector)
                 previous_folder=self.version_path(previous)
@@ -236,15 +260,26 @@ class UpdateService:
                     fiches[egrid]['contraintes']=contraintes()
                     fiches[egrid]['alertes']=sorted(set(fiches[egrid]['alertes'])|{'absente_derniere_collecte_a_examiner'})
                 if set(fiches)!=set(incoming):raise ValueError('Fiches incomplètes')
+                # Contours des parcelles absentes conservés uniquement pour la consultation historique.
+                if missing and (previous_folder/'contours.json').exists():
+                    current=json.loads(contours.read_text())
+                    present_ids={f['attributes'].get('egris_egrid') for f in current['results']}
+                    current['results'].extend(f for f in json.loads((previous_folder/'contours.json').read_text())['results']
+                                              if f['attributes'].get('egris_egrid') in missing and f['attributes'].get('egris_egrid') not in present_ids)
+                    write_json(contours,current)
+                self._interface(stage,list(incoming.values()),fiches,contours,slope_snapshot)
                 identity=dict(reference=sha(reference),contours=sha(contours),regles=sha(config),
                     algorithme=sha(Path(__file__)),fiches=sha(Path(__file__).with_name('fiches_contraintes.py')),
                     observations=sha(Path(__file__).with_name('observations_cantonales.py')),
                     classement=self.classifier_sha,
                     pentes=sha(slope_snapshot) if slope_snapshot.exists() else None,
+                    simulation=sha(stage/'simulation.json'),interface=sha(Path(__file__).with_name('donnees_interface.py')),
+                    calculs={name:sha(ROOT/'code'/name) for name in ('classification.py','prospection.py','geometrie.py')},
+                    collecte=sha(Path(__file__).with_name('collecte_application.py')) if self.base_collector else None,
                     sources={k:{field:info.get(field) for field in ('empreinte_contenu_sha256','empreinte_metadonnees_sha256')} for k,info in report['sources'].items()})
                 fingerprint=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
                 prior=json.loads((previous_folder/'manifest.json').read_text())
-                alerts=[f'{key} : {count} parcelle(s)' for key,count in report['alertes'].items()]
+                alerts=list(state.data.get('alertes',[]))+[f'{key} : {count} parcelle(s)' for key,count in report['alertes'].items()]
                 if missing:alerts.append(f'{len(missing)} parcelle(s) absentes conservées pour examen ; aucun archivage automatique')
                 bilan={'parcelles':len(fiches),'ajoutees':len(added),'absentes':len(missing),'croisements':report['bilan']}
                 if prior.get('empreinte')==fingerprint:

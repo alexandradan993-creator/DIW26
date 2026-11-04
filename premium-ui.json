@@ -1,0 +1,12 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["interface"],
+  "locale": "fr-CH",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Select/Listbox", "Form", "Scrollbar", "Toast", "CRUD"],
+  "ownership": {"Select/Listbox": "native"},
+  "evidence": {
+    "crudFullFlow": "tests/test_interface_actualisation.py",
+    "failurePaths": "API/test_service_contraintes.py"
+  }
+}
