@@ -1,5 +1,10 @@
 # Actualisation de `pully_parcelles.csv`
 
+**Nouveau mode séparé :** [export des croisements ISOS cantonaux et dangers](CROISEMENTS.md),
+via `--croisements`. Il utilise les couches 404/422 et les contours locaux, sans
+modifier les 76 colonnes de la base ni activer une version dans l'application.
+L'accès réel à ces couches reste à valider après autorisation réseau.
+
 `actualiser_pully.py` recrée la base des parcelles de Pully depuis **GEO.vd** et **SIGIP**.
 Il écrit un **nouveau** fichier `pully_parcelles_AAAA-MM-JJ_HHMM.csv`, avec les mêmes
 76 colonnes et les mêmes clés JSON que la base actuelle. Il ne remplace jamais rien.

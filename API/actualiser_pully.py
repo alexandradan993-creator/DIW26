@@ -664,7 +664,23 @@ def main():
     ap.add_argument("--sortie", default="versions", help="dossier des nouvelles bases")
     ap.add_argument("--reference", help="base actuelle à comparer (ex. ../pully_parcelles.csv)")
     ap.add_argument("--diagnostic", action="store_true", help="teste les sources sans rien produire")
+    ap.add_argument("--croisements", action="store_true", help="export ISOS/dangers seulement ; aucune base active remplacée")
+    ap.add_argument("--diagnostic-croisements", action="store_true", help="affiche les métadonnées et champs des couches 404/422")
+    ap.add_argument("--contours", type=Path, default=ICI.parent / "data/parcelles/source_esri_lv95.json")
+    ap.add_argument("--champ-site-isos", help="nom exact du champ de site après vérification du schéma")
+    ap.add_argument("--champ-classe-danger", help="nom exact du champ de classe après vérification du schéma")
+    ap.add_argument("--couverture-isos", type=Path, help="périmètre d'étude sourcé en MN95")
+    ap.add_argument("--couverture-dangers", type=Path, help="périmètre d'étude sourcé en MN95")
     args = ap.parse_args()
+
+    if args.diagnostic_croisements:
+        from croisements_contraintes import BASE, LAYERS, request_json
+        for nom, lid in LAYERS.items():
+            info = request_json(f"{BASE}/{lid}?f=json")
+            print(json.dumps({"source": nom, "url": f"{BASE}/{lid}",
+                              "champs": info.get("fields"), "edition": info.get("editingInfo"),
+                              "attribution": info.get("copyrightText")}, ensure_ascii=False, indent=2))
+        return
 
     if args.diagnostic:
         sys.exit(0 if diagnostic() else 1)
@@ -683,6 +699,19 @@ def main():
     etat = Etat(sortie)
     try:
         etat.maj(etape="Vérification des sources")
+        if args.croisements:
+            from croisements_contraintes import export_crossings
+            reference = Path(args.reference) if args.reference else ICI.parent / "pully_parcelles.csv"
+            chemin, rapport = export_crossings(reference, args.contours, sortie, etat,
+                                               args.champ_site_isos, args.champ_classe_danger,
+                                               args.couverture_isos, args.couverture_dangers)
+            etat.maj(statut="termine", fin_utc=maintenant(), fichier=str(chemin.relative_to(sortie)),
+                     bilan={"parcelles": rapport["parcelles"], "croisements": rapport["bilan"]},
+                     alertes=[f"{key} : {count} parcelle(s)" for key, count in rapport["alertes"].items()],
+                     etape=None, mode="croisements_seuls",
+                     activation_automatique=False)
+            print(f"Export à vérifier : {chemin}")
+            return
         if not diagnostic():
             raise RuntimeError("Au moins une source est inaccessible. Base actuelle conservée.")
         lignes = construire(etat)
