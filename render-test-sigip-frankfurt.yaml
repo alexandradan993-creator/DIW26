@@ -1,0 +1,15 @@
+# Sonde de connectivité uniquement : aucune donnée ni aucun secret de Foncimo.
+services:
+  - type: web
+    name: foncimo-test-sigip-frankfurt
+    runtime: python
+    region: frankfurt
+    branch: main
+    plan: free
+    autoDeployTrigger: "off"
+    buildCommand: python -c "import sys; print(sys.version)"
+    startCommand: python -u API/sonde_reseau_web.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
