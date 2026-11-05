@@ -7,6 +7,7 @@ import gc
 import hashlib
 import importlib.util
 import json
+import ijson
 import os
 import re
 import tempfile
@@ -54,9 +55,23 @@ def write_json(path,value):
         Path(tmp).unlink(missing_ok=True)
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=1)
 def immutable_json(path):
-    return json.loads(Path(path).read_text())
+    # Éviter de conserver l’ancienne base pendant le chargement de la suivante.
+    immutable_json.cache_clear()
+    gc.collect()
+    with Path(path).open('rb') as stream:
+        return dict(ijson.kvitems(stream,'',use_float=True))
+
+
+def verifier_fiches(path,expected,version):
+    verified=set()
+    with path.open('rb') as stream:
+        for egrid,fiche in ijson.kvitems(stream,'',use_float=True):
+            if egrid in verified or fiche.get('egrid')!=egrid or fiche.get('version')!=version:
+                raise ValueError('Fiche candidate incohérente')
+            verified.add(egrid)
+    if verified!=expected:raise ValueError('Version candidate incohérente')
 
 
 class OperationState(Etat):
@@ -453,9 +468,7 @@ class UpdateService:
                 # Relire avant activation ; une erreur conserve le pointeur précédent.
                 gc.collect()
                 state.maj(etape='Relecture de contrôle')
-                verified=json.loads((stage/'fiches.json').read_text())
-                if set(verified)!=set(incoming):raise ValueError('Version candidate incohérente')
-                del verified
+                verifier_fiches(stage/'fiches.json',set(incoming),version)
                 manifest['date_activation']=maintenant()
                 write_json(stage/'manifest.json',manifest)
                 state.maj(etape='Activation',bilan=bilan,alertes=alerts)

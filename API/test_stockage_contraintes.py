@@ -22,6 +22,23 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text()), original)
             self.assertEqual(list(Path(directory).iterdir()), [path])
 
+    def test_streaming_validation_rejects_truncated_duplicate_and_wrong_identity(self):
+        from service_contraintes import verifier_fiches, immutable_json
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'fiches.json'
+            payload={'E1':{'egrid':'E1','version':'V','valeur':1.25,'vide':None}}
+            write_json(path,payload)
+            with patch.object(Path,'read_text',side_effect=AssertionError('Lecture entière interdite')):
+                verifier_fiches(path,{'E1'},'V')
+                self.assertEqual(immutable_json(str(path)),payload)
+            for raw in ('{"E1":',
+                        '{"E1":{"egrid":"E1","version":"V"},"E1":{"egrid":"E1","version":"V"}}',
+                        '{"E1":{"egrid":"E2","version":"V"}}',
+                        '{"E1":{"egrid":"E1","version":"ancienne"}}'):
+                path.write_text(raw)
+                with self.assertRaises(Exception):verifier_fiches(path,{'E1'},'V')
+            immutable_json.cache_clear()
+
     def fixture(self):
         from test_service_contraintes import ServiceTests
         fixture = ServiceTests()
