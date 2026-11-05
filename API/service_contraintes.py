@@ -65,7 +65,7 @@ class OperationState(Etat):
         super().maj(**values)
         if any(key in values for key in ('etape','statut')):
             print('Foncimo opération '+json.dumps({key:self.data.get(key) for key in
-                ('operation_id','statut','etape')},ensure_ascii=False),flush=True)
+                ('operation_id','statut','etape','erreur','bilan')},ensure_ascii=False),flush=True)
         history=self.folder/'operations';history.mkdir(exist_ok=True)
         write_json(history/(self.data['operation_id']+'.json'),self.data)
 
@@ -248,7 +248,7 @@ class UpdateService:
             rules=dict(row)
             if observation:
                 for kind,field in (('batiments','notes_batiment_existante_json'),('sites','notes_site_existante_json')):
-                    notes=observation['notes_'+kind]
+                    notes=[n for n in observation['notes_'+kind] if n != 0]
                     if notes:
                         old=rules.get(field) or []
                         if isinstance(old,str):old=json.loads(old)

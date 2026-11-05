@@ -50,8 +50,10 @@ def collecter(contours,etat,previous=None,collect=None):
                 for key in ('NOTE_CARTO','NOTE_DETAIL'):
                     value=attrs.get(key)
                     if value is not None:
-                        if isinstance(value,bool) or str(value) not in {str(n) for n in range(1,8)}:
-                            raise ValueError(f'Note patrimoniale inconnue GEO.vd : couche {layer}')
+                        if isinstance(value,bool) or str(value) not in {str(n) for n in range(0,8)}:
+                            raise ValueError(f'Note patrimoniale inconnue GEO.vd : couche {layer}, {key}={value!r}')
+                        # Code officiel 0 : objet recensé mais pas évalué (légende GEO.vd).
+                        # Conservé comme observation, jamais comme preuve d’absence de protection.
                         notes.append(int(value))
                 entry['notes_'+kind].extend(notes)
                 entry['objets'].append(dict(couche=layer,id=attrs.get('ID_OBJET_RECENSE'),

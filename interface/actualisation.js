@@ -141,7 +141,7 @@
       for (const [key,label] of [['notes_batiments','Bâtiments recensés'],['notes_sites','Sites recensés']]) {
         const line = document.createElement('p');
         line.textContent = label + ' : ' + (!heritage.contour_exploitable ? 'À vérifier : contour inexploitable'
-          : heritage[key]?.length ? heritage[key].join(', ') : 'Aucune note rencontrée dans les couches consultées');
+          : heritage[key]?.length ? heritage[key].map(note => note === 0 ? '0 (recensé, pas évalué — à vérifier)' : note).join(', ') : 'Aucune note rencontrée dans les couches consultées');
         group.append(line);
       }
       const comparison = document.createElement('p');

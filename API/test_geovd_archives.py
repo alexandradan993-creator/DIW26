@@ -74,6 +74,16 @@ class GeoTests(unittest.TestCase):
             self.assertIn('patrimoine_geovd.json',archive.namelist())
             self.assertEqual(json.loads(archive.read('manifest.json'))['mode_actualisation'],'geovd')
 
+    def test_official_zero_is_retained_without_removing_old_protection(self):
+        f=self.fixture();cfg=f.service.criteria.load_criteria(f.service.config)
+        f.rows[0]['notes_batiment_existante_json']='[1]'
+        observations=patrimoine(f.contours,None,collect=self.bundles(0))
+        self.assertEqual(observations['parcelles']['E1']['notes_batiments'],[0])
+        self.assertEqual(observations['parcelles']['E1']['objets'][0]['note_carto'],0)
+        fiches=f.service._fiches(f.rows,{}, {},cfg,f.service.active(),contours_path=f.contours,
+                                 patrimoine=observations['parcelles'])
+        self.assertEqual(fiches['E1']['classement']['statut_filtrage_criteres'],'rouge')
+
     def test_unknown_note_refuses_candidate(self):
         f=self.fixture()
         with self.assertRaisesRegex(ValueError,'Note patrimoniale inconnue'):
