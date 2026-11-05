@@ -203,7 +203,7 @@
 
   async function archives(container) {
     const heading = document.createElement('h3'); heading.textContent = 'Archives des bases de données';
-    const info = document.createElement('p'); info.textContent = 'Sur Ces archives sont temporaires. Téléchargez-les pour les conserver. Les notes et dossiers personnels restent dans ce navigateur.';
+    const info = document.createElement('p'); info.textContent = 'Ces archives sont temporaires. Téléchargez-les pour les conserver. Les notes et dossiers personnels restent dans ce navigateur.';
     const state = document.createElement('p'); state.setAttribute('role','status'); state.textContent = 'Chargement des archives…';
     container.append(heading,info,state);
     try {
