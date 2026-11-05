@@ -16,6 +16,12 @@ class InterfaceTests(unittest.TestCase):
         from test_service_contraintes import ServiceTests
         from serveur_contraintes import make_server
         fixture=ServiceTests();fixture.setUp()
+        entered=threading.Event();release=threading.Event()
+        original_collect=fixture.service.collector
+        def slow_collect(layer,bbox):
+            entered.set();release.wait(timeout=10)
+            return original_collect(layer,bbox)
+        fixture.service.collector=slow_collect
         server=make_server(fixture.service,port=0)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         try:
@@ -33,6 +39,18 @@ class InterfaceTests(unittest.TestCase):
                 page.wait_for_function("document.querySelector('#applicationStatus').textContent.includes('2 parcelles')")
                 page.locator('[data-tab="data"]').click()
                 page.locator('#refreshData').focus();page.keyboard.press('Enter')
+                self.assertTrue(entered.wait(timeout=3))
+                self.assertTrue(page.locator('#refreshData').is_disabled())
+                page.locator('[data-tab="saved"]').click()
+                page.evaluate("openFolder(shapes.find(r=>r.egrid==='E1'),true)")
+                page.locator('#personalNote').fill('Brouillon à conserver pendant la mise à jour')
+                release.set();fixture.service.thread.join(timeout=10)
+                current=fixture.service.active()
+                page.wait_for_function('(v)=>document.querySelector("#applicationStatus").textContent.includes(v)',arg=current)
+                self.assertTrue(page.locator('#folderDetails').is_visible())
+                self.assertEqual(page.locator('#personalNote').input_value(),'Brouillon à conserver pendant la mise à jour')
+                page.keyboard.press('Escape')
+                page.locator('[data-tab="data"]').click()
                 page.wait_for_function("document.querySelector('#refreshStatus').textContent.includes('Actualisation terminée')")
                 self.assertTrue(any(method=='POST' and url.endswith('/actualisations') for method,url in requests))
                 self.assertTrue(any('/actualisations/' in url and not url.endswith('/etat') for _,url in requests))
@@ -55,6 +73,7 @@ class InterfaceTests(unittest.TestCase):
                 self.assertEqual(errors,[])
                 browser.close()
         finally:
+            release.set()
             server.shutdown();server.server_close();thread.join();fixture.tearDown()
 
 if __name__=='__main__':unittest.main()

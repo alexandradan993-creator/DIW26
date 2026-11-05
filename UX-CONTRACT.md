@@ -37,3 +37,28 @@ HTTP Basic, transportée en HTTPS par Render. Le mot de passe est généré côt
 hébergeur et n'est jamais intégré dans l'interface. `/healthz` ne sert que le statut
 du service et reste anonyme. Aucune gestion de comptes ou de rôles multiples
 n'est ajoutée à cette première version.
+
+## Contrat du HTML final — version 2
+
+L'adaptateur `API/donnees_interface.py` fournit `schema_version: 2`. Chaque ligne
+contient dix éléments dans `info` : surface, zone, motifs, vérifications, lien
+RDPPF, mesures historiques, observations officielles, indicateurs cadastraux,
+simulations du classificateur et indicateur de vigilance forestière. Les valeurs
+des fiches et de l'export proviennent du même calcul et de la même version.
+La couleur reste celle du classificateur de l'équipe.
+
+Le voisinage forestier est calculé avec `compute_forest_neighbor_index` sur les
+contours valides de cette version, convertis de MN95 vers le contrat WGS84 requis
+par cette fonction. Les contours invalides ne sont pas réparés. Les pentes ne sont
+plus transmises à cet argument ; elles restent un filtre d'affichage facultatif.
+
+La fiche affiche les logements déclarés calculés par `classification.py`, avec
+leurs divergences explicites. Le CSV brut reste conservé, y compris son total
+géographique différent. Aucun nouveau droit de construire n'est déduit des simulations.
+
+Au démarrage, une ancienne version d'interface est migrée dans une nouvelle version
+locale complète, activée atomiquement. La migration conserve les données brutes,
+observations et annotations ; aucune collecte n'est déclenchée. Les anciennes
+mesures de pente exportées sont reprises si leur CSV n'était pas archivé. Une
+version sans contour archivé ne peut être migrée en mélangeant les sources actuelles.
+Une erreur de préparation laisse la version précédente active.

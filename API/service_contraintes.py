@@ -76,6 +76,7 @@ class UpdateService:
         self.classifier_sha=sha(ROOT/'code/criteres_category.py')
         self._initialise()
         self._recover_interrupted()
+        self._upgrade_interface()
 
     def _recover_interrupted(self):
         if not self.lock.exists():return
@@ -106,10 +107,12 @@ class UpdateService:
             cfg=self.criteria.load_criteria(self.config)
             version='initiale-'+uuid4().hex
             folder=self.storage/version;folder.mkdir()
-            fiches=self._fiches(rows,{}, {},cfg,version)
+            slope_snapshot=folder/'pentes.csv'
+            if self.slopes.exists():slope_snapshot.write_bytes(self.slopes.read_bytes())
+            fiches=self._fiches(rows,{}, {},cfg,version,contours_path=self.contours)
             write_json(folder/'parcelles.json',{r['egrid']:r for r in rows})
             (folder/'contours.json').write_bytes(self.contours.read_bytes())
-            self._interface(folder, rows, fiches, self.contours, self.slopes)
+            self._interface(folder, rows, fiches, self.contours, slope_snapshot)
             write_json(folder/'fiches.json',fiches)
             write_json(folder/'manifest.json',dict(version=version,empreinte=None,
                 mode='base_initiale_contraintes_inconnues',regles=cfg,date_creation=maintenant(),
@@ -118,6 +121,59 @@ class UpdateService:
             write_json(self.pointer,{'version':version})
         finally:
             self.lock.unlink(missing_ok=True)
+
+    def _upgrade_interface(self):
+        """Migration locale du contrat d'affichage ; le CSV actif et les observations sont conservés."""
+        previous=self.active();folder=self.version_path(previous)
+        export=folder/'interface.json'
+        if export.exists() and json.loads(export.read_text()).get('schema_version')==2:return
+        fd=os.open(self.lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+        os.write(fd,json.dumps({'pid':os.getpid(),'operation_id':'migration_interface'}).encode());os.close(fd)
+        try:
+            if self.active()!=previous:raise RuntimeError('Version active modifiée pendant la préparation')
+            if not (folder/'contours.json').exists():
+                raise ValueError('Ancienne version sans contours archivés : migration impossible sans mélanger les sources')
+            with tempfile.TemporaryDirectory(prefix='.interface-v2-',dir=self.storage) as temp:
+                stage=Path(temp);version='application-'+uuid4().hex
+                incoming=json.loads((folder/'parcelles.json').read_text());rows=list(incoming.values())
+                fiches=copy.deepcopy(json.loads((folder/'fiches.json').read_text()))
+                prior=json.loads((folder/'manifest.json').read_text());cfg=prior['regles']
+                for name in ('contours.json','pentes.csv','simulation.json'):
+                    if (folder/name).exists():(stage/name).write_bytes((folder/name).read_bytes())
+                # Les anciennes versions initiales n'archivaient pas le CSV de pentes.
+                # Reprendre uniquement les mesures déjà exportées, sans lire un raster actuel.
+                if not (stage/'pentes.csv').exists() and export.exists():
+                    old_payload=json.loads(export.read_text());slope_rows=[]
+                    for item in old_payload.get('parcels',[]):
+                        facts=item[6][5]
+                        slope_rows.append({'egrid':item[1],'pente_mediane_pct':facts[7],
+                            'part_pixels_valides_pct':facts[8],'statut_calcul':'repris_export_precedent'})
+                    if slope_rows:
+                        with (stage/'pentes.csv').open('w',encoding='utf-8',newline='') as stream:
+                            writer=csv.DictWriter(stream,fieldnames=list(slope_rows[0]))
+                            writer.writeheader();writer.writerows(slope_rows)
+                from donnees_interface import voisinage
+                neighbors=voisinage(rows,stage/'contours.json',self.criteria)
+                for row in rows:
+                    egrid=row['egrid'];fiches[egrid]['version']=version
+                    fiches[egrid]['classement']=self.criteria.evaluate_parcel(row,cfg,neighbors.get(egrid))
+                self._interface(stage,rows,fiches,stage/'contours.json',stage/'pentes.csv')
+                write_json(stage/'parcelles.json',incoming);write_json(stage/'fiches.json',fiches)
+                manifest=dict(prior,version=version,precedente=previous,empreinte=None,
+                              mode='migration_interface_v2',date_creation=maintenant(),schema_interface=2)
+                write_json(stage/'manifest.json',manifest)
+                payload=json.loads((stage/'interface.json').read_text())
+                if payload['total']!=len(rows) or {r[1] for r in payload['parcels']}!=set(fiches):
+                    raise ValueError('Migration interface incomplète')
+                os.rename(stage,self.storage/version)
+                write_json(self.pointer,{'version':version})
+                # Une vérification sans changement appartient aux observations, pas à l'ancienne présentation.
+                checked=self.storage/'verification_sources.json'
+                if checked.exists():
+                    data=json.loads(checked.read_text())
+                    if data.get('version')==previous:
+                        data['version']=version;write_json(checked,data)
+        finally:self.lock.unlink(missing_ok=True)
 
     def _interface(self,folder,rows,fiches,contours,slopes):
         from donnees_interface import preparer
@@ -144,21 +200,15 @@ class UpdateService:
         if not (folder/'manifest.json').exists():raise KeyError('Version inconnue')
         return folder
 
-    def _fiches(self,rows,crossings,provenance,cfg,version,slopes_path=None):
-        slopes={}
-        slopes_path=slopes_path or self.slopes
-        if slopes_path.exists():
-            with slopes_path.open(encoding='utf-8-sig',newline='') as stream:
-                for row in csv.DictReader(stream):
-                    if not row.get('egrid') or row['egrid'] in slopes:
-                        raise ValueError('EGRID pente absent/dupliqué')
-                    slopes[row['egrid']]=row
+    def _fiches(self,rows,crossings,provenance,cfg,version,slopes_path=None,contours_path=None):
+        from donnees_interface import voisinage
+        neighbors=voisinage(rows,contours_path or self.contours,self.criteria)
         result={}
         for row in rows:
             egrid=row['egrid']
             result[egrid]=dict(egrid=egrid,numero_parcelle=row.get('numero_parcelle'),version=version,
                 presente_derniere_collecte=True,zone_dominante=row.get('zone_dominante'),
-                classement=self.criteria.evaluate_parcel(row,cfg,slopes.get(egrid)),
+                classement=self.criteria.evaluate_parcel(row,cfg,neighbors.get(egrid)),
                 contraintes=contraintes(crossings.get(egrid),provenance),
                 alertes=(crossings.get(egrid) or {}).get('alertes_json',[]))
         return result
@@ -254,7 +304,7 @@ class UpdateService:
                 added=sorted(set(incoming)-set(old))
                 state.maj(etape='Validation de la version candidate')
                 version='application-'+uuid4().hex
-                fiches=self._fiches(rows,{r['egrid']:r for r in crossings},report,cfg,version,slope_snapshot)
+                fiches=self._fiches(rows,{r['egrid']:r for r in crossings},report,cfg,version,slope_snapshot,contours)
                 for egrid in missing:
                     incoming[egrid]=old[egrid]
                     fiches[egrid]=copy.deepcopy(old_fiches[egrid]);fiches[egrid]['version']=version

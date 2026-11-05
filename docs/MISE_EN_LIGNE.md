@@ -117,5 +117,20 @@ python API/serveur_contraintes.py --stockage API/versions/base_2026-11-04_1614
 La base contient 2 672 EGRID uniques et les 76 colonnes attendues. Avec les critères
 `49566c2`, elle donne 291 vertes, 526 jaunes et 1 855 rouges, comme l'ancien CSV.
 La fiche calculée 607 retient 10 logements déclarés ; le total géographique brut
-reste 19 dans la source, sans être écrasé. Le raccordement du dernier HTML demeure
-un travail séparé ; cette sélection de BDD ne l'intègre pas automatiquement.
+reste 19 dans la source, sans être écrasé. Le dernier HTML fourni est désormais raccordé au contrat d'interface version 2 ;
+les données ne sont plus incorporées dans le HTML. La mise en ligne reste à effectuer
+dans Render, puis l'accès aux sources officielles doit être vérifié sur cet hébergement.
+
+## HTML final intégré
+
+La version de `prototype-pully-verification.zip` est maintenant servie par le
+serveur, avec son bouton relié à l'API, les indicateurs cadastraux et les simulations
+de surélévation. Les logements de la fiche 607 sont corrigés à 10 déclarés. Le lac
+est masqué de l'affichage mais conservé dans la base. Les anciennes versions de
+fiches sont migrées localement au nouveau format, sans supprimer les notes.
+
+Avant de considérer l'actualisation complète comme opérationnelle sur Render,
+cliquer sur le bouton et attendre une réponse `termine` ou `aucun_changement` :
+l'accès SIGIP reste bloqué dans l'environnement de ce chat malgré son ajout
+au brouillon. Aucun déploiement Render ni réussite réseau SIGIP ne sont attestés
+par les seuls tests locaux de l'interface.

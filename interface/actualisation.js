@@ -31,14 +31,20 @@
 
   async function reload() {
     const data = await api('/application/donnees');
-    if (!data.version || !Array.isArray(data.parcels) || data.parcels.length !== data.total) {
+    if (data.schema_version !== 2 || !data.version || !Array.isArray(data.parcels) || data.parcels.length !== data.total) {
       throw new Error('Export de la version serveur incomplet. Affichage précédent conservé.');
+    }
+    if (data.parcels.some(row => !Array.isArray(row) || row.length !== 10 || !Array.isArray(row[6])
+      || row[6].length !== 10 || !Array.isArray(row[6][7]) || row[6][7].length !== 19)) {
+      throw new Error('Format des fiches incompatible. Affichage précédent conservé.');
     }
     const ids = data.parcels.map(row => row[1]);
     if (ids.some(id => !id) || new Set(ids).size !== ids.length) throw new Error('EGRID absents ou dupliqués.');
     // Tout préparer avant de remplacer les données communes de Carte et Liste.
-    const next = data.parcels.map(makeShape);
+    const hidden = new Set(data.masquees_par_defaut || []);
+    const next = data.parcels.filter(row => !hidden.has(row[1])).map(makeShape);
     const chosen = selected?.egrid;
+    const panelState = Object.fromEntries(['inlineSearch','inlineStatus','contactFilter','decisionFilter'].map(id => [id, document.getElementById(id)?.value]));
     shapes.splice(0, shapes.length, ...next);
     for (const key of Object.keys(parcelAddresses)) delete parcelAddresses[key];
     for (const key of Object.keys(filterMeasures)) delete filterMeasures[key];
@@ -47,10 +53,17 @@
     version = data.version;
     selected = shapes.find(row => row.egrid === chosen) || null;
     if (document.querySelector('#details').open) document.querySelector('#details').close();
-    if (document.querySelector('#folderDetails').open) document.querySelector('#folderDetails').close();
+    // Un dossier en cours de saisie reste ouvert : ne pas perdre ses champs non enregistrés.
     selectParcel(selected);
-    if (activeTab === 'list' || activeTab === 'saved') renderInline(activeTab === 'saved');
-    banner.textContent = `${data.total.toLocaleString('fr-CH')} parcelles · version ${version} · notes personnelles conservées`;
+    if (activeTab === 'list' || activeTab === 'saved') {
+      renderInline(activeTab === 'saved');
+      for (const [id, value] of Object.entries(panelState)) {
+        const control = document.getElementById(id);
+        if (control && value != null) control.value = value;
+      }
+      document.getElementById('inlineSearch')?.dispatchEvent(new Event('input'));
+    }
+    banner.textContent = `${data.total.toLocaleString('fr-CH')} parcelles · ${next.length.toLocaleString('fr-CH')} affichées · version ${version} · notes personnelles conservées`;
     banner.title = version;
   }
 
@@ -131,8 +144,7 @@
       ['dangers_classes', 'Classes de danger rencontrées'],
       ['danger_part_risque_pct', 'Part recouverte par un danger identifié'],
       ['dangers_couverture_pct', 'Couverture de l’étude des dangers'],
-      ['danger_nul_etudie', 'Danger nul confirmé sur toute la parcelle'],
-      ['danger_naturel_bloquant', 'Danger naturel bloquant']
+      ['danger_nul_etudie', 'Danger nul confirmé sur toute la parcelle']
     ];
     const dl = document.createElement('dl');
     for (const [key, label] of definitions) {

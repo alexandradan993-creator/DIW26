@@ -136,19 +136,47 @@ function renderParcelSections(parcel,area,zone){
   const provenance=document.createElement('small');provenance.textContent=source;
   const dl=document.createElement('dl');
   for(const [label,value] of items){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value;dl.append(dt,dd)}
-  section.append(heading,provenance,dl);container.append(section);
+  section.append(heading);if(source)section.append(provenance);section.append(dl);container.append(section);
  }
- group('Parcelle et bâti','CSV parcellaire · cadastre, SIGIP et registre des bâtiments',[
+ if(Number(parcel.info[7][9])>0){
+  const notice=document.createElement('aside');notice.setAttribute('role','note');
+  notice.style.cssText='position:static;padding:16px;margin:0 0 18px;border:1px solid #c9ad58;border-radius:10px;background:#fff5d5;color:#2a3c37;line-height:1.5';
+  const title=document.createElement('strong');title.textContent='Attention · Présence de forêt';
+  const text=document.createElement('p');text.style.margin='6px 0 0';
+  text.textContent=(parcel.info[9]?'Les autres critères de classement sont satisfaits, mais une surface forestière est cartographiée sur cette parcelle. Elle reste sous conditions.':'Une surface forestière est cartographiée sur cette parcelle. Les autres motifs de classement restent applicables.')+' La localisation et les contraintes liées à la forêt doivent être vérifiées avant tout projet.';
+  notice.append(title,text);container.append(notice);
+ }
+ group('Parcelle et bâti','',[
   ['Adresses',(parcelAddresses[parcel.egrid]||[]).join(' · ')||empty],['Type de parcelle',kind||empty],['Surface géométrique',num(area,'m²')],['Zone dominante',zone||empty],['Emprise bâtie',num(footprint,'m²')],['Part bâtie du terrain',num(ratio,'%',100)],['Bâtiments recensés',num(buildings)],['Logements renseignés',num(homes)],['Notes patrimoniales relevées',notes.length?notes.join(', '):'Aucune note renseignée']]);
- group('Terrain et simulations','Pente et forme par EGRID · simulation COS du classement DIW26',[
+ const [domain,publicTown,publicCanton,outside,green,greenPct,hard,hardPct,forestHit,forestArea,forestPct,waterHit,waterArea,waterPct,forestDist,waterDist,neighbor,neighborDist,neighborId]=parcel.info[7];
+ const available=v=>v!==null&&v!==''&&v!=='Inconnu'&&v!=='Indéterminé';
+ const areaPct=(a,b)=>available(a)?num(a,'m²')+(available(b)?' · '+num(b,'%'):''):'';
+ const descriptors=[
+  ['Domaine cadastral',domain],['Domaine public communal',publicTown],['Domaine public cantonal',publicCanton],
+  ['Surface hors emprise des bâtiments',available(outside)?num(outside,'m²'):''],
+  ['Surface verte cartographiée',areaPct(green,greenPct)],['Surface dure cartographiée',areaPct(hard,hardPct)],
+  ['Intersection avec la forêt',available(forestHit)?forestHit+(forestHit==='Oui'?' · '+areaPct(forestArea,forestPct):''):''],
+  ['Intersection avec les eaux',available(waterHit)?waterHit+(waterHit==='Oui'?' · '+areaPct(waterArea,waterPct):''):''],
+  ['Distance à la surface forestière cartographiée',available(forestDist)?num(forestDist,'m')+' · intersection':''],
+  ['Distance à la surface d’eau cartographiée',available(waterDist)?num(waterDist,'m')+' · intersection':''],
+  ['Parcelle voisine avec forêt',neighbor==='Oui'?'Oui'+(available(neighborDist)?' · '+num(neighborDist,'m')+' entre contours cadastraux':'')+(neighborId?' · '+neighborId:''):neighbor?.startsWith('Non détectée')?neighbor:'']
+ ].filter(([,v])=>available(v));
+ if(descriptors.length)group('Indicateurs cadastraux','',descriptors);
+ group('Terrain et simulations','Retrait uniforme et COS exploratoire : hypothèses à vérifier',[
   ['Pente médiane',num(slope,'%')],['Pixels de pente valides',num(coverage,'%')],['Part restante après retrait simulé de 6 m',num(remaining,'%')+(shapeStatus==='calcule_a_verifier'?' · contour à vérifier':'')],['Aire restante simulée',num(remainingArea,'m²')],['Marge d’emprise COS simulée',num(cos,'%')],['Écart d’emprise COS simulé',num(cosGap,'m²')]]);
+ const terrainSection=container.lastElementChild;
+ const current=parcel.info[8];
+ if(current){
+  const simulations=[['Marge au sol simulée avec bâti conservé',current.surface_exploitable_avec_batiment_m2,'m²'],['Emprise théorique simulée sans bâti',current.surface_exploitable_sans_batiment_m2,'m²'],['Hauteur réglementaire renseignée',current.hauteur_reglementaire_max_m,'m'],['Hauteur du bâtiment renseignée',current.hauteur_batiment_existant_m,'m']].filter(([,v])=>available(v)).map(([label,v,unit])=>[label,num(v,unit)]);
+  if(current.surelevation_etude_applicable==='Oui')simulations.push(['Piste de surélévation',current.piste_surelevation],['Limite de l’étude',current.motif_surelevation||'Hypothèse indicative : hauteur et autorisation à vérifier']);
+  if(simulations.length)group('Simulations du module de critères',current.surface_exploitable_statut||'Résultats indicatifs à vérifier',simulations);
+ }
  if(cos!=null&&cos!==''&&Number(cos)===0){
   const note=document.createElement('p');const em=document.createElement('em');
   em.textContent=cosGap!==''&&Number(cosGap)<0?'La marge est de 0 % parce que l’emprise existante dépasse le plafond simulé. L’écart négatif ci-dessus indique de combien.':'La marge est de 0 % parce que l’emprise existante atteint le plafond simulé.';
-  note.append(em);container.lastElementChild.append(note);
+  note.append(em);terrainSection.append(note);
  }
- group('Contraintes à vérifier','Données renseignées pour le module de critères',[
-  ['Pleine terre réglementaire',num(earth,'%')],['Distance à la forêt',num(forest,'m')],['Distance à un cours d’eau',num(water,'m')],['Recul depuis la route',num(road,'m')],['Danger naturel bloquant',yesNo(danger)],['Accès compliqué',yesNo(access)],['Arbre important au centre',empty],['Propriété communale',empty]]);
+
 }
 foncimoClicks.sheet=async()=>{
  const target=selected;if(!target)return;
@@ -162,7 +190,7 @@ foncimoClicks.sheet=async()=>{
  renderParcelSections(selected,area,zone);
  window.foncimoActualisation.contraintes(fiche,document.querySelector('#parcelSections'));
  const omitted=new Set(['Information manquante · Pleine terre minimale (%)','Information manquante · Distance à la lisière de forêt (m)', "Information manquante · Distance au cours d'eau (m)",'Information manquante · Recul depuis la route (m)'].map(normalizeSearch));
- const displayed=[...reasons,...checks].filter(value=>!omitted.has(normalizeSearch(value))&&!value.startsWith('Information manquante · Présence ISOS'));
+ const displayed=[...reasons,...checks].filter(value=>normalizeSearch(value)!=='evaluation surface seuil moyen potentiel'&&!omitted.has(normalizeSearch(value))&&!value.startsWith('Information manquante · Présence ISOS'));
  document.querySelector('#checksHeading').hidden=!displayed.length;
  document.querySelector('#checks').hidden=!displayed.length;
  document.querySelector('#checks').replaceChildren(...displayed.map(value=>{const li=document.createElement('li');li.textContent=value;return li}));

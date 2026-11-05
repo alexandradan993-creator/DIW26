@@ -143,6 +143,53 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(self.service.active(),old)
         self.assertEqual(self.service.interface(),before)
 
+    def test_final_prototype_fields_and_forest_neighbor_use_same_contours(self):
+        self.rows[0]['sigip_forets_surface_intersection_m2']='0'
+        self.rows[1]['sigip_forets_surface_intersection_m2']='1'
+        self.save_rows(self.rows)
+        self.contours.write_text(json.dumps({'sr':2056,'results':[
+            feature(1,square(),egris_egrid='E1'),feature(2,square(10),egris_egrid='E2')]}))
+        self.service.start(background=False)
+        data=self.service.interface();self.assertEqual(data['schema_version'],2)
+        for item in data['parcels']:
+            self.assertEqual(len(item[6]),10)
+            self.assertEqual(len(item[6][7]),19)
+            self.assertIn('surface_exploitable_sans_batiment_m2',item[6][8])
+        fiche=self.service.fiche('E1')
+        self.assertEqual(fiche['classement']['voisine_parcelle_avec_foret'],'Oui')
+        item=next(r for r in data['parcels'] if r[1]=='E1')
+        self.assertEqual(item[6][7][16],'Oui')
+        self.assertEqual(fiche['classement']['distance_parcelle_forestiere_m'],0)
+
+    def test_old_interface_migrates_without_network_and_preserves_notes_and_slope(self):
+        previous=self.service.active();folder=self.service.version_path(previous)
+        export=json.loads((folder/'interface.json').read_text())
+        export.pop('schema_version')
+        for item in export['parcels']:
+            item[6]=item[6][:6];item[6][5][7]=0;item[6][5][8]=100
+        (folder/'interface.json').write_text(json.dumps(export))
+        (folder/'pentes.csv').unlink(missing_ok=True)
+        (self.service.storage/'annotations_expert.json').write_text(json.dumps({'E1':{'note':'à conserver'}}))
+        # La migration doit fonctionner à partir du contour archivé, même si l'entrée externe change.
+        self.contours.write_text('entrée externe modifiée')
+        restored=UpdateService(self.service.storage,self.reference,self.contours,slopes=self.service.slopes)
+        self.assertNotEqual(restored.active(),previous)
+        self.assertEqual(restored.interface()['schema_version'],2)
+        self.assertTrue((folder/'manifest.json').exists())
+        self.assertEqual(restored.fiche('E1')['annotations_expert']['note'],'à conserver')
+        self.assertEqual(restored.fiche('E1')['donnees'],self.service.fiche('E1',previous)['donnees'])
+        self.assertEqual(next(r for r in restored.interface()['parcels'] if r[1]=='E1')[6][5][7],0)
+
+    def test_failed_interface_migration_keeps_previous_pointer(self):
+        previous=self.service.active();folder=self.service.version_path(previous)
+        export=json.loads((folder/'interface.json').read_text());export.pop('schema_version')
+        (folder/'interface.json').write_text(json.dumps(export))
+        with patch('donnees_interface.preparer',side_effect=ValueError('Export incohérent')):
+            with self.assertRaisesRegex(ValueError,'Export incohérent'):
+                UpdateService(self.service.storage,self.reference,self.contours,slopes=self.service.slopes)
+        self.assertEqual(self.service.active(),previous)
+        self.assertFalse(self.service.lock.exists())
+
     def test_same_running_operation_returned_and_old_version_readable(self):
         entered=threading.Event();release=threading.Event();old=self.service.active()
         def slow(layer,bbox):

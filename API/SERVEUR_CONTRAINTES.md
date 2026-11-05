@@ -299,3 +299,34 @@ Le contrôle de référence de l'actualiseur est exécuté séparément, sans le
   `test_criteres_priorites.py` et `test_zonage_eliminatoire.py` attendent les
   anciens libellés `retenue/exclue/a_verifier`, remplacés par `vert/jaune/rouge`.
   Ces règles et tests existants ne sont pas modifiés dans ce lot.
+
+## HTML final raccordé le 5 novembre 2026
+
+L'interface reçue dans `prototype-pully-verification.zip` est intégrée sans son
+ancien jeu de données incorporé : les données sont chargées depuis l'API. Le
+bouton utilise le contrôleur d'actualisation existant. Les huit anciennes
+contraintes vides ne sont pas réintroduites dans les fiches.
+
+`GET /application/donnees` expose maintenant `schema_version: 2` et dix éléments
+dans `info`. Les nouveaux indicateurs et les simulations de surélévation
+proviennent de `fiche.classement`, les logements déclarés et les simulations
+historiques de `fiche.indicateurs`. Les observations sourcées sont lues par la
+fiche canonique versionnée. Le lac reste dans les 2 672 lignes de l'API ;
+`masquees_par_defaut` indique l'EGRID masqué des 2 671 lignes affichées.
+
+Le voisinage forestier est calculé sur les mêmes contours MN95 valides que la
+carte et les croisements, en réutilisant la fonction inchangée de l'équipe. Les
+contours utilisés diffèrent de l'ancien GeoJSON historique : les totaux du
+voisinage descriptif peuvent donc différer ; aucune règle de couleur n'est changée.
+
+Les anciennes versions sont migrées localement vers ce contrat au démarrage ;
+les fichiers source externes ne sont pas relus à la place des contours archivés,
+et les observations et notes ne sont pas supprimées. La migration n'actualise
+pas les sources officielles et ne remplace pas le CSV d'une base active existante.
+
+Validation : 23 tests export/service, 7 tests du serveur Web, 3 tests du collecteur,
+parcours Chromium du bouton et test du jeu complet. Jeu chargé : 291 vertes,
+526 jaunes, 1 855 rouges ; fiche 607 = 10 logements déclarés, divergence 608 visible.
+GEO.vd répond dans cet environnement ; SIGIP est encore refusé par le proxy
+(403). Une actualisation complète des sources réelles n'est donc pas annoncée
+comme validée ici et devra être testée depuis Render.

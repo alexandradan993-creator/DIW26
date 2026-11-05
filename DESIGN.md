@@ -26,7 +26,7 @@ components:
 
 ## Overview
 
-Application de travail en français pour la prospection à Pully, Suisse. Le plan cadastral coloré et les fiches constituent la signature existante. Cette intégration conserve l'interface fournie, ses onglets Carte, Liste et Mes dossiers et ses contrôles natifs. Elle n'ajoute aucun score de constructibilité.
+Application de travail en français pour la prospection à Pully, Suisse. Le plan cadastral coloré et les fiches constituent la signature existante. La version du 5 novembre reprend l'HTML du paquet `prototype-pully-verification.zip`, ses onglets Carte, Liste et Mes dossiers et ses contrôles natifs. Elle n'ajoute aucun score de constructibilité.
 
 Le CSS de `interface/carte-pully.html` reste canonique (modèle B) : les variables `--foncimo-dark`, `--foncimo-accent`, `--foncimo-soft`, `--foncimo-paper`, `--foncimo-line`, `--foncimo-text` correspondent respectivement aux couleurs ci-dessus. Ce document décrit ces valeurs, sans deuxième génération de thème.
 
@@ -54,7 +54,7 @@ Bords droits issus de l'interface reçue. Contours cadastraux dessinés dans le 
 
 Le contrôleur `interface/actualisation.js` possède l'appel API, le suivi et le retour utilisateur commun. En cours : bouton désactivé, `aria-busy` et étape réelle. Réussite : rechargement de la version commune. Erreur : texte persistant et nouvelle tentative possible. Pas de progression inventée.
 
-Fiches : les contraintes proviennent du même endpoint par EGRID, quelle que soit la vue d'origine. Valeur inconnue : « À vérifier » ; zéro ou faux confirmé : affichage conservé. Les sources et dates accompagnent les observations.
+Fiches : les contraintes proviennent du même endpoint par EGRID, quelle que soit la vue d'origine. Valeur inconnue : « À vérifier » ; zéro ou faux confirmé : affichage conservé. Les sources et dates accompagnent les observations. Les nouveaux indicateurs cadastraux et simulations sont affichés dans leurs sections dédiées ; le bloc des huit anciennes contraintes non renseignées reste retiré, conformément à l'HTML reçu. La présence de forêt est signalée dans un encart en flux normal, sans superposition à la fiche.
 
 Sélecteurs existants natifs, popup gérée par le système. Pas de nouvelle bibliothèque d'icônes. Aucune animation ajoutée ; réduction des mouvements respectée.
 
@@ -64,3 +64,7 @@ Sélecteurs existants natifs, popup gérée par le système. Pas de nouvelle bib
 - Présenter les simulations COS et retraits comme simulations.
 - Ne pas annoncer de réussite après une erreur réseau.
 - Ne pas remplacer une inconnue par zéro ni un danger observé par une exclusion juridique.
+
+Les couleurs viennent exclusivement de `criteres_category.py`. Le lac
+`CH298395274555` reste dans la base/API mais est masqué de la Carte et de la Liste,
+comme dans le prototype fourni ; le bandeau distingue le total et les lignes affichées.

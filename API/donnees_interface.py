@@ -4,6 +4,7 @@ import importlib.util
 import json
 import math
 import sys
+import tempfile
 from pathlib import Path
 from pyproj import Transformer
 from shapely.geometry import mapping
@@ -22,6 +23,27 @@ def nombre(v):
 
 def valeurs(v):
     return json.loads(v) if isinstance(v,str) and v else v or []
+
+
+def voisinage(rows, contours, criteria):
+    """Même contour MN95 que l'affichage, converti pour le contrat GeoJSON de l'équipe."""
+    from shapely import transform
+    raw=json.loads(contours.read_text())
+    if raw.get('sr')!=2056:
+        raise ValueError('Contours MN95 requis pour le voisinage')
+    to_wgs=Transformer.from_crs(2056,4326,always_xy=True).transform
+    features=[];seen=set()
+    for item in raw['results']:
+        egrid=item['attributes'].get('egris_egrid')
+        if not egrid or egrid in seen:raise ValueError('Contour EGRID absent ou dupliqué')
+        seen.add(egrid)
+        try:polygon=polygon_esri(item.get('geometry'))
+        except ValueError:continue
+        features.append(dict(type='Feature',properties={'egrid':egrid},geometry=mapping(transform(polygon,to_wgs,interleaved=False))))
+    with tempfile.TemporaryDirectory(prefix='voisinage-') as folder:
+        path=Path(folder)/'contours.geojson'
+        path.write_text(json.dumps(dict(type='FeatureCollection',features=features)),encoding='utf-8')
+        return criteria.compute_forest_neighbor_index(rows,path,tolerance_m=1.0)
 
 
 def derivations(stage, etat):
@@ -70,7 +92,7 @@ def preparer(stage,rows,fiches,contours,slopes,configuration):
         if e in polygons:raise ValueError('Contour EGRID dupliqué')
         try:polygons[e]=polygon_esri(f.get('geometry'))
         except ValueError:polygons[e]=None
-    geometries=[g for g in polygons.values() if g is not None]
+    geometries=[g for e,g in polygons.items() if g is not None and e!='CH298395274555'] or [g for g in polygons.values() if g is not None]
     if not geometries:raise ValueError('Aucun contour valide pour la carte')
     minx=min(g.bounds[0] for g in geometries);miny=min(g.bounds[1] for g in geometries)
     maxx=max(g.bounds[2] for g in geometries);maxy=max(g.bounds[3] for g in geometries)
@@ -115,11 +137,27 @@ def preparer(stage,rows,fiches,contours,slopes,configuration):
         addresses[e]=[' '.join(str(a.get(k) or '') for k in ('rue','numero')).strip() for a in valeurs(row.get('adresses_json'))]
         facts=[row.get('genre_parcelle'),foot,ratio,nombre(row.get('batiments_nombre')),indicators['logements_rattachement_declare'],nombre(row.get('surface_plancher_verifiee_m2')),None,
             nombre(slope.get('pente_mediane_pct')),nombre(slope.get('part_pixels_valides_pct')),indicators['part_terrain_apres_retrait_pct'],shape.get('surface_apres_retrait_m2'),indicators['forme_statut'],margin,notes,None,None,None,None,None,None,gap]
-        def labels(keys):return [classified['filtres'][key].get('libelle',key) for key in keys]
-        checks=labels(classified.get('filtres_inconnus',[]))+indicators['anomalies_bati_json']
+        def labels(keys,prefix):return [prefix+classified['filtres'][key].get('label',key) for key in keys]
+        checks=labels(classified.get('filtres_inconnus',[]),'Information manquante · ')+labels(classified.get('alertes',[]),'Alerte · ')+labels(classified.get('criteres_evaluation_defavorables',[]),'Évaluation · ')+labels(classified.get('notes_reglementaires',[]),'Information · ')+indicators['anomalies_bati_json']
         if not ficha['presente_derniere_collecte']:
             checks.insert(0,'Absente de la dernière collecte : parcelle conservée pour examen, pas une suppression confirmée.')
-        info=[area,row.get('zone_dominante'),labels(classified.get('filtres_echoues',[])),checks,row.get('url_rdppf'),facts]
+        descriptor_keys=('domaine_cadastral','domaine_public_communal','domaine_public_cantonal',
+            'surface_hors_emprise_m2','surface_verte_cartographiee_m2','surface_verte_cartographiee_pct',
+            'surface_dure_cartographiee_m2','surface_dure_cartographiee_pct','intersection_foret',
+            'surface_intersection_foret_m2','part_intersection_foret_pct','intersection_eaux',
+            'surface_intersection_eaux_m2','part_intersection_eaux_pct','distance_lisiere_foret_m',
+            'distance_cours_d_eau_m','voisine_parcelle_avec_foret','distance_parcelle_forestiere_m','egrid_voisin_forestier')
+        descriptors=[classified.get(k) for k in descriptor_keys]
+        current={k:classified.get(k) for k in ('cos_zone_dominante','surface_exploitable_avec_batiment_m2',
+            'surface_exploitable_sans_batiment_m2','surface_exploitable_statut','ius_zone_dominante',
+            'plancher_max_theorique_ius_m2','hauteur_reglementaire_max_m','hauteur_batiment_existant_m',
+            'piste_surelevation','surelevation_etude_applicable','motif_surelevation','hauteur_reference_scenario_m',
+            'niveaux_reference_scenario_min','niveaux_reference_scenario_max','niveaux_supplementaires_scenario_min',
+            'niveaux_supplementaires_scenario_max')}
+        constraints=ficha['contraintes']
+        official={k:constraints[k] for k in constraints}
+        forest_alone=(nombre(classified.get('surface_intersection_foret_m2')) or 0)>0 and not classified['filtres_echoues'] and not classified['filtres_inconnus'] and classified['filtres']['emprise_max']['etat']=='ok'
+        info=[area,row.get('zone_dominante'),labels(classified.get('filtres_echoues',[]),'Échec · '),checks,row.get('url_rdppf'),facts,official,descriptors,current,forest_alone]
         status=statuses.get(classified['statut_filtrage_criteres'],'a_verifier_filtres')
         result.append([str(row.get('numero_parcelle') or ''),e,status,polys,cx,cy,info,center,list(project.transform(*center)) if center else None,None])
-    (stage/'interface.json').write_text(json.dumps(dict(version=next(iter(fiches.values()))['version'],parcels=result,addresses=addresses,measures=measures,non_cartographiees=unmapped,total=len(rows)),ensure_ascii=False,allow_nan=False),encoding='utf-8')
+    (stage/'interface.json').write_text(json.dumps(dict(schema_version=2,version=next(iter(fiches.values()))['version'],parcels=result,addresses=addresses,measures=measures,non_cartographiees=unmapped,total=len(rows),masquees_par_defaut=[r['egrid'] for r in rows if r['egrid']=='CH298395274555']),ensure_ascii=False,allow_nan=False),encoding='utf-8')
