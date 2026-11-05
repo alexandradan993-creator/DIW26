@@ -69,7 +69,7 @@ Les couleurs viennent exclusivement de `criteres_category.py`. Le lac
 `CH298395274555` reste dans la base/API mais est masqué de la Carte et de la Liste,
 comme dans le prototype fourni ; le bandeau distingue le total et les lignes affichées.
 
-La section des archives dans Dossiers reprend le composant `.parcelFacts`, les
+La section des archives dans Données reprend le composant `.parcelFacts`, les
 liens natifs et les dates en français suisse. Les notes GEO.vd sont présentées
 dans le même composant des fiches, avec un avertissement sur les données SIGIP
 historiques. Aucun nouveau thème ni nouvelle convention de navigation n'est ajouté.

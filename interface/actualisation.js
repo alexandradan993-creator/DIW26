@@ -219,7 +219,7 @@
       }
       container.append(list);
     } catch (error) {
-      if (container.isConnected) state.textContent = `Archives indisponibles : ${error.message}. Rouvrez Dossiers pour réessayer.`;
+      if (container.isConnected) state.textContent = `Archives indisponibles : ${error.message}. Rouvrez Données pour réessayer.`;
     }
   }
 

@@ -243,7 +243,7 @@ et leur comparaison sont archivées dans `patrimoine_geovd.json` et les fiches.
 Les anciennes notes bloquantes ne sont pas effacées. Le bilan indique le périmètre
 GEO.vd et distingue la première observation des évolutions réellement observées.
 
-Dans Dossiers, chaque version valide disponible est listée avec date et heure,
+Dans Données, chaque version valide disponible est listée avec date et heure,
 périmètre et lien ZIP authentifié. Le ZIP contient tous les fichiers de cette
 version, dont parcelles, fiches, contours, manifeste et observations. Les notes
 personnelles du navigateur et annotations serveur séparées ne sont pas incluses.

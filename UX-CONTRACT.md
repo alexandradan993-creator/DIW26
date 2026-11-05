@@ -96,7 +96,7 @@ les objets, notes, source et date de vérification. La comparaison se fait entre
 deux observations GEO.vd de la même application ; la date de collecte n'est pas
 une date de publication officielle. Carte et Liste utilisent la même version.
 
-Dossiers contient une section « Archives des bases de données », chargée via
+Données contient une section « Archives des bases de données », chargée via
 GET /versions, avec date/heure Europe/Zurich, périmètre, base active et lien ZIP.
 GET /versions/{version}/archive.zip exige la même authentification que les données.
 L'archive contient la version serveur, pas les notes du navigateur ni le mot de

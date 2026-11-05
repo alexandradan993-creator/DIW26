@@ -360,7 +360,6 @@ async function importFolders(file,message){
 
 function renderInline(onlySaved){
  workspace.innerHTML='<h2>'+ (onlySaved?'Dossiers sauvegardés':'Liste des parcelles')+'</h2>'+(onlySaved?'<p style="padding:12px;background:#fff3d6;border-radius:8px"><strong>Usage personnel et non commercial</strong></p>':'')+'<input id="inlineSearch" aria-label="Filtrer les choix" placeholder="Numéro, EGRID ou adresse"><div class="inlineChoices"><label>Numéro de parcelle ou EGRID<select id="listIdSelect"></select></label><div class="addressSearch"><label>Rechercher une adresse<input id="listAddressSearch" placeholder="Rue et numéro"></label><div id="listAddressResults" class="addressResults" aria-live="polite"></div></div></div><div id="listFilters"></div><select id="inlineStatus" aria-label="Statut"><option value="">Tous les statuts</option><option value="0">Exploitables</option><option value="1">Sous conditions ou à vérifier</option><option value="2">Exclues</option></select><p id="inlineCount"></p><div id="inlineRows"></div>';
- if(onlySaved){const archivePanel=document.createElement('section');archivePanel.className='parcelFacts';archivePanel.id='databaseArchives';workspace.append(archivePanel);window.foncimoActualisation.archives(archivePanel)}
  if(onlySaved){const b=document.createElement('button');b.id='exportAll';b.textContent='Exporter mes dossiers (.xlsx)';b.disabled=!saved.size;b.onclick=()=>exportDossiers(shapes.filter(r=>saved.has(r.egrid)),'dossiers-pully.xlsx');workspace.querySelector('h2').after(b);const create=document.createElement('button');create.textContent='Créer un dossier';create.onclick=openCreateFolder;b.before(create);
  const clear=document.createElement('button');clear.id='clearFolders';clear.type='button';clear.textContent='Supprimer tous les dossiers';clear.disabled=!saved.size;b.after(clear);
  clear.onclick=()=>{document.querySelector('#clearFoldersSummary').textContent=saved.size+' dossier'+(saved.size===1?' sera retiré.':'s seront retirés.');clearFoldersDialog.showModal()};
@@ -404,6 +403,7 @@ function navigateTab(button){
  workspace.innerHTML='<h2>Données</h2><button id="refreshData" type="button" onclick="foncimoActualisation.start()">Actualiser les données</button><p id="refreshStatus" role="status"></p>';
  const buttonRefresh=workspace.querySelector('#refreshData');
  window.foncimoActualisation.mount(buttonRefresh,workspace.querySelector('#refreshStatus'));
+ const archivePanel=document.createElement('section');archivePanel.className='parcelFacts';archivePanel.id='databaseArchives';workspace.append(archivePanel);window.foncimoActualisation.archives(archivePanel);
 
 };
 
