@@ -118,14 +118,14 @@ def create_app(service, origins=(), username=None, password=None):
 def main():
     from waitress import serve
     from collecte_application import collecter
-    from service_contraintes import UpdateService
+    from service_contraintes import DEFAULT_REFERENCE, UpdateService
 
     password = os.environ.get('FONCIMO_PASSWORD', '')
     username = os.environ.get('FONCIMO_USERNAME', 'foncimo')
     if len(password) < 16 or not username or ':' in username:
         raise SystemExit('Configurer FONCIMO_USERNAME et FONCIMO_PASSWORD (16 caractères minimum) dans les secrets de l’hébergeur.')
     storage = Path(os.environ.get('FONCIMO_STORAGE', str(ROOT/'API/versions/web')))
-    reference = Path(os.environ.get('FONCIMO_REFERENCE', str(ROOT/'pully_parcelles.csv')))
+    reference = Path(os.environ.get('FONCIMO_REFERENCE', str(DEFAULT_REFERENCE)))
     service = UpdateService(storage=storage, reference=reference, base_collector=collecter)
     app = create_app(service, username=username, password=password)
     print('Foncimo prêt : interface et API, authentification activée.', flush=True)

@@ -40,7 +40,8 @@ stockage. Ne pas augmenter le nombre d'instances sans revoir ce fonctionnement.
   Le contrôle `/healthz` est public et ne révèle ni parcelle ni identifiant de version.
 - Stockage des versions sous `/var/data/foncimo/versions`, sur le disque persistant.
 - Collecte réutilisant le script inchangé de l'équipe ; aucun changement des critères.
-- Base initiale issue du CSV suivi dans le dépôt, sans collecte réseau au démarrage.
+- Base initiale : `API/bases/pully_parcelles_2026-11-04_1614.csv`, configurée par
+  `FONCIMO_REFERENCE`, sans collecte réseau au démarrage.
   Les observations ISOS/dangers sont inconnues tant qu'une actualisation n'a pas abouti.
 
 Le disque contient les versions et les annotations serveur. Les notes et dossiers
@@ -96,3 +97,25 @@ message d'erreur pour diagnostiquer l'accès ou le service officiel.
 Ces vérifications sont locales. Le Blueprint, le domaine HTTPS et l'accès SIGIP de
 Render ne peuvent être contrôlés en conditions réelles qu'après création du service
 par votre compte Render.
+
+## Base API sélectionnée le 5 novembre 2026
+
+Le CSV `API/bases/pully_parcelles_2026-11-04_1614.csv` devient la référence par défaut
+des nouveaux stockages, en remplacement du choix initial `pully_parcelles.csv`.
+L'ancien CSV reste intact. La référence et son empreinte SHA-256 sont inscrites
+dans le manifeste de la version initiale. `render.yaml` fixe explicitement ce choix.
+
+Cette sélection ne remplace pas une version déjà active sur un disque existant.
+Pour tester avant le premier déploiement, un stockage séparé a été préparé sous
+`API/versions/base_2026-11-04_1614` ; les anciens dossiers restent conservés.
+Commande de démarrage local, en arrêtant d'abord uniquement votre ancienne instance :
+
+```bash
+python API/serveur_contraintes.py --stockage API/versions/base_2026-11-04_1614
+```
+
+La base contient 2 672 EGRID uniques et les 76 colonnes attendues. Avec les critères
+`49566c2`, elle donne 291 vertes, 526 jaunes et 1 855 rouges, comme l'ancien CSV.
+La fiche calculée 607 retient 10 logements déclarés ; le total géographique brut
+reste 19 dans la source, sans être écrasé. Le raccordement du dernier HTML demeure
+un travail séparé ; cette sélection de BDD ne l'intègre pas automatiquement.

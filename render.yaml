@@ -18,6 +18,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.14
+      - key: FONCIMO_REFERENCE
+        value: API/bases/pully_parcelles_2026-11-04_1614.csv
       - key: FONCIMO_STORAGE
         value: /var/data/foncimo/versions
       - key: FONCIMO_USERNAME

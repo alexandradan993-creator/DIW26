@@ -20,6 +20,7 @@ from fiches_contraintes import contraintes
 from observations_cantonales import export_observations
 
 ROOT=Path(__file__).resolve().parents[1]
+DEFAULT_REFERENCE=ROOT/'API/bases/pully_parcelles_2026-11-04_1614.csv'
 
 
 def sha(path):
@@ -59,7 +60,7 @@ class OperationState(Etat):
 class UpdateService:
     def __init__(self,storage=None,reference=None,contours=None,config=None,slopes=None,collector=None,base_collector=None):
         self.storage=Path(storage or ROOT/'API/versions')
-        self.reference=Path(reference or ROOT/'pully_parcelles.csv')
+        self.reference=Path(reference or DEFAULT_REFERENCE)
         self.contours=Path(contours or ROOT/'data/parcelles/source_esri_lv95.json')
         self.config=Path(config or ROOT/'code/criteres.json')
         self.slopes=Path(slopes or ROOT/'data/pentes_parcelles/pentes_parcelles.csv')
@@ -111,7 +112,9 @@ class UpdateService:
             self._interface(folder, rows, fiches, self.contours, self.slopes)
             write_json(folder/'fiches.json',fiches)
             write_json(folder/'manifest.json',dict(version=version,empreinte=None,
-                mode='base_initiale_contraintes_inconnues',regles=cfg,date_creation=maintenant()))
+                mode='base_initiale_contraintes_inconnues',regles=cfg,date_creation=maintenant(),
+                reference={'fichier':str(self.reference),'sha256':sha(self.reference)},
+                contours={'fichier':str(self.contours),'sha256':sha(self.contours)}))
             write_json(self.pointer,{'version':version})
         finally:
             self.lock.unlink(missing_ok=True)

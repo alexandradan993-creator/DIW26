@@ -22,6 +22,10 @@ python -m pip install -r API/requirements_contraintes.txt
 python API/serveur_contraintes.py --reference API/bases/pully_parcelles_2026-11-04_1614.csv
 ```
 
+Par défaut, les nouveaux stockages prennent `API/bases/pully_parcelles_2026-11-04_1614.csv`.
+Le choix est inscrit avec son empreinte dans le manifeste ; une version déjà active
+n’est pas remplacée au redémarrage.
+
 Le serveur écoute uniquement sur la machine locale, port 8000 par défaut.
 `--port` change ce port. `--stockage` change le dossier versionné, par défaut
 `API/versions/` (déjà ignoré par Git). `--contours` sélectionne les contours ESRI
