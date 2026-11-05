@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import csv
+import gc
 import hashlib
 import importlib.util
 import json
@@ -24,7 +25,10 @@ DEFAULT_REFERENCE=ROOT/'API/bases/pully_parcelles_2026-11-04_1614.csv'
 
 
 def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    digest=hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block)
+    return digest.hexdigest()
 
 
 def read_csv(path):
@@ -384,17 +388,24 @@ class UpdateService:
                 missing=sorted(set(old)-set(incoming))
                 added=sorted(set(incoming)-set(old))
                 old_fiches=json.loads((previous_folder/'fiches.json').read_text()) if missing else {}
-                state.maj(etape='Validation de la version candidate')
+                # Les collecteurs isolés forment des cycles module/fonctions ; les libérer
+                # avant de construire les fiches, sans attendre le seuil du GC.
+                missing_rows={e:old[e] for e in missing}
+                del old
+                immutable_json.cache_clear()
+                gc.collect()
+                state.maj(etape='Construction des fiches de la version candidate')
                 version='application-'+uuid4().hex
                 fiches=self._fiches(rows,{r['egrid']:r for r in crossings},report,cfg,version,slope_snapshot,contours,patrimoine['parcelles'] if patrimoine else None)
                 for egrid in missing:
-                    incoming[egrid]=old[egrid]
+                    incoming[egrid]=missing_rows[egrid]
                     fiches[egrid]=copy.deepcopy(old_fiches[egrid]);fiches[egrid]['version']=version
                     fiches[egrid]['presente_derniere_collecte']=False
                     fiches[egrid]['derniere_version_observee']=old_fiches[egrid]['version']
                     fiches[egrid]['contraintes']=contraintes()
                     fiches[egrid]['alertes']=sorted(set(fiches[egrid]['alertes'])|{'absente_derniere_collecte_a_examiner'})
-                del old_fiches,old
+                del old_fiches,missing_rows
+                gc.collect()
                 if set(fiches)!=set(incoming):raise ValueError('Fiches incomplètes')
                 # Contours des parcelles absentes conservés uniquement pour la consultation historique.
                 if missing and (previous_folder/'contours.json').exists():
@@ -403,7 +414,9 @@ class UpdateService:
                     current['results'].extend(f for f in json.loads((previous_folder/'contours.json').read_text())['results']
                                               if f['attributes'].get('egris_egrid') in missing and f['attributes'].get('egris_egrid') not in present_ids)
                     write_json(contours,current)
+                state.maj(etape='Préparation de la carte et de la liste')
                 self._interface(stage,list(incoming.values()),fiches,contours,slope_snapshot)
+                gc.collect()
                 identity=dict(reference=sha(reference),contours=sha(contours),regles=sha(config),
                     algorithme=sha(Path(__file__)),fiches=sha(Path(__file__).with_name('fiches_contraintes.py')),
                     observations=sha(Path(__file__).with_name('observations_cantonales.py')),
@@ -438,6 +451,8 @@ class UpdateService:
                 write_json(stage/'parcelles.json',incoming)
                 write_json(stage/'manifest.json',manifest)
                 # Relire avant activation ; une erreur conserve le pointeur précédent.
+                gc.collect()
+                state.maj(etape='Relecture de contrôle')
                 verified=json.loads((stage/'fiches.json').read_text())
                 if set(verified)!=set(incoming):raise ValueError('Version candidate incohérente')
                 del verified
