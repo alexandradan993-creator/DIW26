@@ -1,6 +1,7 @@
 """Adaptateur isolé du collecteur de l'équipe ; aucune modification de celui-ci."""
 import importlib.util
 import json
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -15,7 +16,7 @@ def collecter(stage, etat, precedentes, _module=None):
         spec = importlib.util.spec_from_file_location('_collecteur_application', ROOT/'API/actualiser_pully.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-    from suivi_collecte import SuiviCollecte
+    from suivi_collecte import CollectionTimeout, SuiviCollecte
     transport = SuiviCollecte(etat, module.telecharger if _module is not None else None)
     original_wfs = module.wfs_requete
     inventories = []
@@ -50,8 +51,29 @@ def collecter(stage, etat, precedentes, _module=None):
         return contenu
 
     def controle_wfs(couche, bbox, max_par_requete=5000, profondeur=0):
-        resultat = original_wfs(couche, bbox, max_par_requete, profondeur)
-        if profondeur >= 6 and len(resultat) >= max_par_requete:
+        # Petits lots dès le départ ; après délai dépassé, conserver toute
+        # l'emprise en la découpant, sans ignorer une couche patrimoniale.
+        limit = min(max_par_requete, 500)
+        try:
+            resultat = original_wfs(couche, bbox, limit, profondeur)
+        except CollectionTimeout:
+            if profondeur >= 6:
+                raise CollectionTimeout(f'SIGIP {couche} : délai dépassé malgré le découpage maximal')
+            if transport.deadline <= time.monotonic():
+                raise
+            etat.maj(etape=f'SIGIP · couche {couche} · découpage de la zone après délai dépassé',
+                     decoupage_sigip={'couche':couche, 'profondeur':profondeur+1})
+            x0,y0,x1,y1 = bbox
+            xm,ym = (x0+x1)/2,(y0+y1)/2
+            result_by_id = {}
+            for area in ((x0,y0,xm,ym),(xm,y0,x1,ym),(x0,ym,xm,y1),(xm,ym,x1,y1)):
+                for feature in controle_wfs(couche,area,limit,profondeur+1):
+                    identity = feature.get('gml_id')
+                    if not identity:
+                        raise ValueError(f'Identifiant SIGIP absent : {couche}')
+                    result_by_id[identity] = feature
+            resultat = list(result_by_id.values())
+        if profondeur >= 6 and len(resultat) >= limit:
             raise ValueError(f'Pagination SIGIP incomplète : {couche}')
         if profondeur == 0:
             hits = ET.fromstring(transport(module.SIGIP_WFS, {

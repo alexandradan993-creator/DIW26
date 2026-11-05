@@ -206,3 +206,13 @@ version partielle n'est activée et la version valide présente reste utilisée.
 Après arrêt du serveur ou perte de /tmp, la reprise et les limites de rétention
 Free restent celles décrites plus haut. Ce suivi ne garantit pas qu'une collecte
 complète tienne en mémoire sur Free.
+
+### SIGIP lent : subdivision des requêtes
+
+L'adaptateur limite désormais les lots WFS à 500 objets. Si une requête dépasse
+son délai, il découpe son emprise en quatre sous-zones et dédoublonne les objets
+par identifiant GML. Le nombre total est toujours comparé au `resultType=hits`
+de l'emprise initiale. Le découpage s'arrête au niveau 6 et respecte la limite
+globale de récupération ; une indisponibilité persistante provoque une erreur,
+jamais l'omission d'une couche patrimoniale. Ce correctif est testé sur des
+réponses synthétiques ; la réussite réelle de SIGIP sur Render reste à vérifier.

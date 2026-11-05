@@ -52,4 +52,45 @@ class CollecteTests(unittest.TestCase):
                 collecter(stage,Etat(stage),{},self.fake(hits=2))
             self.assertFalse((stage/'parcelles.csv').exists())
 
+    def test_timeout_splits_whole_area_and_deduplicates_boundary_objects(self):
+        from suivi_collecte import CollectionTimeout
+        with tempfile.TemporaryDirectory() as tmp:
+            stage=Path(tmp);module=self.fake();original=module.wfs_requete;calls=[]
+            def slow(couche,bbox,max_par_requete=5000,profondeur=0):
+                calls.append((bbox,max_par_requete))
+                if profondeur==0:raise CollectionTimeout('source lente')
+                return original(couche,bbox,max_par_requete,profondeur)
+            module.wfs_requete=slow
+            collecter(stage,Etat(stage),{},module)
+            self.assertEqual(len(calls),5)
+            self.assertEqual({tuple(b) for b,limit in calls[1:]},
+                             {(0,0,5,5),(5,0,10,5),(0,5,5,10),(5,5,10,10)})
+            self.assertTrue(all(limit==500 for bbox,limit in calls))
+            self.assertTrue((stage/'parcelles.csv').exists())
+
+    def test_timeout_split_still_rejects_wrong_global_count(self):
+        from suivi_collecte import CollectionTimeout
+        with tempfile.TemporaryDirectory() as tmp:
+            stage=Path(tmp);module=self.fake(hits=2);original=module.wfs_requete
+            def slow(couche,bbox,max_par_requete=5000,profondeur=0):
+                if profondeur==0:raise CollectionTimeout('source lente')
+                return original(couche,bbox,max_par_requete,profondeur)
+            module.wfs_requete=slow
+            with self.assertRaisesRegex(ValueError,'Effectif SIGIP'):
+                collecter(stage,Etat(stage),{},module)
+            self.assertFalse((stage/'parcelles.csv').exists())
+
+    def test_persistent_timeout_stops_at_maximum_depth(self):
+        from suivi_collecte import CollectionTimeout
+        with tempfile.TemporaryDirectory() as tmp:
+            stage=Path(tmp);module=self.fake();depths=[]
+            def unavailable(couche,bbox,max_par_requete=5000,profondeur=0):
+                depths.append(profondeur)
+                raise CollectionTimeout('source indisponible')
+            module.wfs_requete=unavailable
+            with self.assertRaisesRegex(CollectionTimeout,'découpage maximal'):
+                collecter(stage,Etat(stage),{},module)
+            self.assertEqual(depths,list(range(7)))
+            self.assertFalse((stage/'parcelles.csv').exists())
+
 if __name__=='__main__':unittest.main()

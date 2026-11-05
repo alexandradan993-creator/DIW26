@@ -78,7 +78,8 @@ class SuiviCollecte:
                     self.publish(details, etat='nouvelle tentative après délai dépassé')
         except Exception as error:
             self.publish(details, etat='erreur', motif=str(error), duree_s=round(time.monotonic()-started, 2))
-            raise RuntimeError(f"{details['source']} / couche {details['couche']} / {details['action']} : {error}") from error
+            error_type = CollectionTimeout if isinstance(error, CollectionTimeout) else RuntimeError
+            raise error_type(f"{details['source']} / couche {details['couche']} / {details['action']} : {error}") from error
 
 
 def download(url, params=None, post=False, timeout=REQUEST_SECONDS):
