@@ -103,9 +103,10 @@
         if (['termine', 'aucun_changement'].includes(state.statut)) {
           await reload();
           const alerts = state.alertes?.length ? `\nÀ signaler : ${state.alertes.join(' · ')}` : '';
-          status((state.statut === 'aucun_changement'
-            ? 'Vérification terminée : aucun changement des données.'
-            : (state.mode === 'geovd' ? 'Actualisation GEO.vd terminée. Données SIGIP non actualisées.' : 'Actualisation terminée. La Carte et la Liste utilisent la nouvelle version.')) + alerts, false);
+          status(state.mode === 'geovd' ? 'Actualisation GEO.vd terminée.' :
+            (state.statut === 'aucun_changement'
+              ? 'Vérification terminée : aucun changement des données.'
+              : 'Actualisation terminée. La Carte et la Liste utilisent la nouvelle version.') + alerts, false);
           return;
         }
         status(`Actualisation en cours : ${state.etape || 'traitement serveur'}. Vous pouvez continuer à consulter la version active.`, true);
