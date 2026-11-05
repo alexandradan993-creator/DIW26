@@ -71,3 +71,12 @@ tant que les fichiers du serveur existent. En cas de perte du stockage temporair
 la base initiale est recréée depuis le CSV GitHub configuré. Les notes locales du
 navigateur ne sont pas stockées dans ce répertoire ; les annotations serveur,
 elles, n’ont pas de conservation durable sur cette offre.
+
+## Repère Uzuverse
+
+Les actions « Voir en 3D » de la Carte et de la fiche utilisent le même lien
+Uzuverse `x/y/z`. Le point est celui de la version affichée, en MN95 ; son altitude
+provient du raster local swissALTI3D LN02 (2019/2021), échantillonné au point.
+Ce repère ne représente ni une hauteur de bâtiment ni une délimitation cadastrale
+surlignée. L'altitude reste inconnue hors couverture ; aucun zéro n'est inventé.
+L'enrichissement de la réponse API ne modifie pas les fichiers des versions.

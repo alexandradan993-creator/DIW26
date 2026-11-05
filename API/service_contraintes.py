@@ -218,7 +218,11 @@ class UpdateService:
         if not (folder/'interface.json').exists():
             # Migration d'une version antérieure : ne pas y ajouter de données actuelles.
             raise KeyError('Version antérieure sans export interface ; lancer une actualisation')
-        return immutable_json(str(folder/'interface.json'))
+        payload=immutable_json(str(folder/'interface.json'))
+        from donnees_interface import altitudes_repere
+        heights=altitudes_repere(tuple(tuple(row[7]) if row[7] else None for row in payload['parcels']))
+        # Ne pas muter l'export immuable en cache ni imposer une migration des versions.
+        return dict(payload,parcels=[row[:9]+[height] for row,height in zip(payload['parcels'],heights)])
 
     def active(self):
         return json.loads(self.pointer.read_text())['version']

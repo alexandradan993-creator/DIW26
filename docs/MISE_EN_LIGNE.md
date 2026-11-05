@@ -216,3 +216,13 @@ de l'emprise initiale. Le découpage s'arrête au niveau 6 et respecte la limite
 globale de récupération ; une indisponibilité persistante provoque une erreur,
 jamais l'omission d'une couche patrimoniale. Ce correctif est testé sur des
 réponses synthétiques ; la réussite réelle de SIGIP sur Render reste à vérifier.
+
+### Repère du lien Uzuverse
+
+L'API enrichit l'export d'interface avec l'altitude du raster local au point MN95
+représentatif de chaque parcelle. Le bouton existant retrouve ainsi son format
+`https://pully.uzuverse.com/?x=...&y=...&z=...`, qui affiche un repère de coordonnées,
+au lieu du seul positionnement de caméra `lon/lat/alt`. Le point de contrôle
+2540003.59 / 1151259.87 donne 412.79 m, conformément à la capture du prototype.
+Les versions déjà stockées bénéficient aussi de cet enrichissement à la lecture,
+sans migration de données. Un repère n'est pas un contour cadastral surligné.

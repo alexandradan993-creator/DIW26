@@ -5,6 +5,7 @@ import json
 import math
 import sys
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from pyproj import Transformer
 from shapely.geometry import mapping
@@ -161,3 +162,24 @@ def preparer(stage,rows,fiches,contours,slopes,configuration):
         status=statuses.get(classified['statut_filtrage_criteres'],'a_verifier_filtres')
         result.append([str(row.get('numero_parcelle') or ''),e,status,polys,cx,cy,info,center,list(project.transform(*center)) if center else None,None])
     (stage/'interface.json').write_text(json.dumps(dict(schema_version=2,version=next(iter(fiches.values()))['version'],parcels=result,addresses=addresses,measures=measures,non_cartographiees=unmapped,total=len(rows),masquees_par_defaut=[r['egrid'] for r in rows if r['egrid']=='CH298395274555']),ensure_ascii=False,allow_nan=False),encoding='utf-8')
+
+
+@lru_cache(maxsize=4)
+def altitudes_repere(centres):
+    """Altitude de terrain LN02 pour les liens x/y/z Uzuverse, jamais une hauteur de bâtiment."""
+    import rasterio
+    raster=ROOT/'data/terrain/altitude_2m.tif'
+    if not raster.exists():
+        return tuple(None for _ in centres)
+    heights=[None]*len(centres)
+    with rasterio.Env(GDAL_CACHEMAX=8*1024*1024), rasterio.open(raster) as dataset:
+        if dataset.crs.to_epsg()!=2056:
+            raise ValueError('Raster des repères 3D : coordonnées MN95 requises')
+        valid=[(i,c) for i,c in enumerate(centres) if c and
+               dataset.bounds.left<=c[0]<dataset.bounds.right and
+               dataset.bounds.bottom<c[1]<=dataset.bounds.top]
+        for (index,center),sample in zip(valid,dataset.sample([c for _,c in valid],masked=True)):
+            if not sample.mask[0]:
+                value=nombre(sample[0])
+                if value is not None:heights[index]=round(value,2)
+    return tuple(heights)
