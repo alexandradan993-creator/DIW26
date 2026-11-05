@@ -55,13 +55,51 @@ def write_json(path,value):
         Path(tmp).unlink(missing_ok=True)
 
 
+# Un seul chargement d’export à la fois ; les fiches restent lues séparément.
+_json_lock=threading.RLock()
+
 @lru_cache(maxsize=1)
-def immutable_json(path):
-    # Éviter de conserver l’ancienne base pendant le chargement de la suivante.
-    immutable_json.cache_clear()
+def _immutable_json(path):
+    _immutable_json.cache_clear()
     gc.collect()
     with Path(path).open('rb') as stream:
         return dict(ijson.kvitems(stream,'',use_float=True))
+
+
+def immutable_json(path):
+    with _json_lock:return _immutable_json(path)
+
+
+def clear_immutable_json():
+    with _json_lock:_immutable_json.cache_clear()
+
+immutable_json.cache_clear=clear_immutable_json
+
+
+@lru_cache(maxsize=64)
+def _selected_fiche(path,egrid):
+    with Path(path).open('rb') as stream:
+        for key,value in ijson.kvitems(stream,'',use_float=True):
+            if key==egrid:return value
+    raise KeyError('EGRID inconnu')
+
+
+def selected_fiche(path,egrid):
+    # Regrouper les lectures simultanées identiques, sans charger toute la base.
+    with _json_lock:return _selected_fiche(path,egrid)
+
+
+@lru_cache(maxsize=2)
+def _summaries(path):
+    with Path(path).open('rb') as stream:
+        rows=[dict(egrid=e,numero_parcelle=f['numero_parcelle'],
+                   statut=f['classement']['statut_filtrage_criteres'])
+              for e,f in ijson.kvitems(stream,'',use_float=True)]
+    return sorted(rows,key=lambda row:row['egrid'])
+
+
+def summaries(path):
+    with _json_lock:return _summaries(path)
 
 
 def verifier_fiches(path,expected,version):
@@ -283,9 +321,7 @@ class UpdateService:
     def fiche(self,egrid,version=None):
         version=version or self.active()
         folder=self.version_path(version)
-        fiches=immutable_json(str(folder/'fiches.json'))
-        if egrid not in fiches:raise KeyError('EGRID inconnu')
-        result=copy.deepcopy(fiches[egrid])
+        result=copy.deepcopy(selected_fiche(str(folder/'fiches.json'),egrid))
         # Annotations stockées séparément, jamais écrasées par une actualisation.
         annotations=self.storage/'annotations_expert.json'
         result['annotations_expert']=json.loads(annotations.read_text()).get(egrid,{}) if annotations.exists() else {}
@@ -302,12 +338,9 @@ class UpdateService:
 
     def liste(self,version=None,offset=0,limit=50):
         version=version or self.active()
-        fiches=immutable_json(str(self.version_path(version)/'fiches.json'))
-        ids=sorted(fiches)
-        # Les résumés renvoient vers l'unique endpoint de fiche pour Carte et Liste.
-        return dict(version=version,total=len(ids),offset=offset,
-                    parcelles=[dict(egrid=e,numero_parcelle=fiches[e]['numero_parcelle'],
-                                    statut=fiches[e]['classement']['statut_filtrage_criteres']) for e in ids[offset:offset+limit]])
+        rows=summaries(str(self.version_path(version)/'fiches.json'))
+        return dict(version=version,total=len(rows),offset=offset,
+                    parcelles=copy.deepcopy(rows[offset:offset+limit]))
 
     def status(self,operation=None):
         if operation:

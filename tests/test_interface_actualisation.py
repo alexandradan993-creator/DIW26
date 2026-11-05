@@ -11,6 +11,41 @@ sys.path.insert(0,str(ROOT/'API'))
 
 @unittest.skipUnless(os.environ.get('RUN_BROWSER_TESTS')=='1','Activer RUN_BROWSER_TESTS=1 pour Chromium')
 class InterfaceTests(unittest.TestCase):
+    def test_temporary_html_retries_reads_but_never_repeats_launch(self):
+        from playwright.sync_api import sync_playwright
+        from test_service_contraintes import ServiceTests
+        from serveur_contraintes import make_server
+        fixture=ServiceTests();fixture.setUp()
+        server=make_server(fixture.service,port=0)
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with sync_playwright() as p:
+                browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+                page=browser.new_page();counts={'reads':0,'posts':0};errors=[]
+                page.on('pageerror',lambda error:errors.append(str(error)))
+                def state(route):
+                    counts['reads']+=1
+                    if counts['reads']==1:
+                        route.fulfill(status=503,content_type='text/html',body='<!DOCTYPE html><h1>Unavailable</h1>')
+                    else:route.continue_()
+                def launch(route):
+                    counts['posts']+=1
+                    route.fulfill(status=502,content_type='text/html',body='<!DOCTYPE html><h1>Unavailable</h1>')
+                page.route('**/actualisations/etat',state);page.route('**/actualisations',launch)
+                page.goto(f'http://127.0.0.1:{server.server_address[1]}')
+                page.wait_for_function("document.querySelector('#applicationStatus').textContent.includes('2 parcelles')")
+                page.locator('[data-tab="data"]').click();page.locator('#refreshData').click()
+                page.wait_for_function("document.querySelector('#refreshStatus').textContent.includes('Actualisation non confirmée')")
+                self.assertEqual(counts,{'reads':2,'posts':1})
+                text=page.locator('#refreshStatus').inner_text()
+                self.assertIn('momentanément indisponible',text)
+                self.assertNotIn('Unexpected token',text);self.assertNotIn('DOCTYPE',text)
+                self.assertFalse(page.locator('#refreshData').is_disabled())
+                self.assertEqual(errors,[])
+                browser.close()
+        finally:
+            server.shutdown();server.server_close();thread.join();fixture.tearDown()
+
     def test_refresh_and_failure_keep_same_version(self):
         from playwright.sync_api import sync_playwright
         from test_service_contraintes import ServiceTests

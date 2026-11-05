@@ -103,3 +103,9 @@ L'archive contient la version serveur, pas les notes du navigateur ni le mot de
 passe. Les échecs n'activent aucune base et ne créent pas d'archive visible ; une
 vérification sans changement ne duplique pas la base. Ces archives serveur restent
 temporaires sur Free ; le téléchargement permet une conservation par l'utilisateur.
+
+Les lectures API reprennent au maximum deux fois après une interruption réseau ou
+une réponse HTML temporaire. Une demande POST d’actualisation n’est jamais renvoyée
+automatiquement : le prochain clic retrouve d’abord l’état serveur. Les fiches sont
+lues individuellement avec un cache borné ; les accès simultanés ne chargent pas
+plusieurs copies de la base complète.

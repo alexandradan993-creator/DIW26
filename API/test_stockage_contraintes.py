@@ -39,6 +39,26 @@ class StorageTests(unittest.TestCase):
                 with self.assertRaises(Exception):verifier_fiches(path,{'E1'},'V')
             immutable_json.cache_clear()
 
+    def test_parallel_fiche_reads_and_pagination_keep_large_payloads_separate(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from service_contraintes import selected_fiche, summaries, _selected_fiche, _summaries
+        _selected_fiche.cache_clear();_summaries.cache_clear()
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'fiches.json'
+            values={str(i):{'egrid':str(i),'numero_parcelle':str(i),
+                           'classement':{'statut_filtrage_criteres':'jaune'},
+                           'detail':'x'*50000} for i in range(100)}
+            write_json(path,values)
+            del values
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                results=list(pool.map(lambda i:selected_fiche(str(path),str(i%4)),range(12)))
+            self.assertEqual([r['egrid'] for r in results],[str(i%4) for i in range(12)])
+            self.assertEqual(len(summaries(str(path))),100)
+            self.assertNotIn('detail',summaries(str(path))[0])
+            self.assertEqual(_selected_fiche.cache_info().currsize,4)
+            with self.assertRaises(KeyError):selected_fiche(str(path),'absent')
+            _selected_fiche.cache_clear();_summaries.cache_clear()
+
     def fixture(self):
         from test_service_contraintes import ServiceTests
         fixture = ServiceTests()

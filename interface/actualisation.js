@@ -11,10 +11,32 @@
     if (!['http:', 'https:'].includes(location.protocol)) {
       throw new Error('Ouvrez cette interface depuis le serveur Python, à http://127.0.0.1:8000/.');
     }
-    const response = await fetch(path, {...options, signal: AbortSignal.timeout(20000), cache: 'no-store'});
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.erreur || `Réponse serveur ${response.status}`);
-    return data;
+    const canRetry = !options.method || options.method === 'GET';
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await fetch(path, {...options, signal: AbortSignal.timeout(20000), cache: 'no-store'});
+        if (response.status === 401) throw new Error('Connexion requise. Rechargez la page pour vous reconnecter.');
+        const temporary = [408, 429, 502, 503, 504].includes(response.status);
+        let data;
+        try {data = JSON.parse(await response.text());}
+        catch {
+          const error = new Error('Le serveur est momentanément indisponible.');
+          error.retryable = true; throw error;
+        }
+        if (!response.ok) {
+          const error = new Error(data.erreur || `Réponse serveur ${response.status}`);
+          error.retryable = temporary; throw error;
+        }
+        return data;
+      } catch (error) {
+        const networkError = ['TimeoutError','AbortError','TypeError'].includes(error.name);
+        if (canRetry && (error.retryable || networkError) && attempt < 2) {
+          await pause(1000 * (attempt + 1)); continue;
+        }
+        if (networkError) throw new Error('La connexion au serveur a été interrompue. Réessayez dans quelques instants.');
+        throw error;
+      }
+    }
   }
 
   function status(text, pending = busy) {
