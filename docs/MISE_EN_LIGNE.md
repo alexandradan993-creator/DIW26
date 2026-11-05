@@ -1,4 +1,4 @@
-# Première version Foncimo sur Render
+# Première version gratuite Foncimo sur Render
 
 Cette publication héberge **l'interface HTML issue de Figma et son API Python ensemble**.
 Le dépôt contient le nécessaire dans `render.yaml`. Un fichier Figma publié seul ne
@@ -12,10 +12,11 @@ fait pas tourner Python. Aucun service Render n'a été créé automatiquement d
 2. Se connecter à [Render](https://dashboard.render.com/), puis choisir **New → Blueprint**.
 3. Connecter GitHub et sélectionner `alexandradan993-creator/DIW26`, branche `main`.
    Si le dépôt est privé, lui accorder l'accès depuis l'installation GitHub Render.
-4. Render lit `render.yaml`. Examiner le service `foncimo-pully`, le plan **Starter**
-   et le disque persistant **1 Go**. **Ces ressources sont payantes** : vérifier le
-   montant indiqué par Render avant de valider. Une publication gratuite sans disque
-   ne garantirait pas la conservation des versions ; elle n'est pas configurée ici.
+4. Render lit `render.yaml`. Vérifier le service `foncimo-pully`, le plan **Free**
+   et l’absence de disque persistant. Ne pas valider une ressource Starter ou un
+   disque payant. Si une facturation ou une carte est demandée, vérifier les
+   conditions affichées par Render avant de poursuivre : ce dépôt ne garantit
+   pas les conditions d’inscription de la plateforme.
 5. Valider le Blueprint lorsque ces paramètres conviennent. Attendre la fin du build
    et l'état **Live**. Render fournit alors l'adresse HTTPS effective de l'application.
 6. Dans le service, ouvrir **Environment** et consulter `FONCIMO_PASSWORD`, généré par
@@ -38,13 +39,19 @@ stockage. Ne pas augmenter le nombre d'instances sans revoir ce fonctionnement.
 - Interface et API à la même origine : pas d'URL API à coller dans le navigateur.
 - Authentification HTTP Basic sur les pages, les données et l'actualisation.
   Le contrôle `/healthz` est public et ne révèle ni parcelle ni identifiant de version.
-- Stockage des versions sous `/var/data/foncimo/versions`, sur le disque persistant.
+- Stockage temporaire des versions sous `/tmp/foncimo/versions`, sans disque payant.
 - Collecte réutilisant le script inchangé de l'équipe ; aucun changement des critères.
 - Base initiale : `API/bases/pully_parcelles_2026-11-04_1614.csv`, configurée par
   `FONCIMO_REFERENCE`, sans collecte réseau au démarrage.
   Les observations ISOS/dangers sont inconnues tant qu'une actualisation n'a pas abouti.
 
-Le disque contient les versions et les annotations serveur. Les notes et dossiers
+Le stockage temporaire contient les versions et les annotations serveur. Il peut
+être effacé lors d’un redémarrage, d’une mise en veille ou d’un redéploiement :
+l’application repart alors du CSV GitHub configuré. Un simple redémarrage qui
+conserve les fichiers peut conserver la version, mais ce n’est pas une garantie.
+Les actualisations API ne sont pas enregistrées automatiquement sur GitHub.
+
+Les notes et dossiers
 créés dans l'interface reçue restent dans le navigateur : un autre ordinateur ne
 les retrouvera pas automatiquement. La conservation doit être distinguée de la
 synchronisation entre utilisateurs, qui n'est pas implémentée.
@@ -76,8 +83,8 @@ Start : python API/application_web.py
 Health check : /healthz
 ```
 
-Vérifier `FONCIMO_STORAGE=/var/data/foncimo/versions`, le montage du disque sur
-`/var/data/foncimo` et la présence du mot de passe. Le serveur refuse de démarrer
+Vérifier `FONCIMO_STORAGE=/tmp/foncimo/versions`, le plan Free sans disque
+et la présence du mot de passe. Le serveur refuse de démarrer
 avec un mot de passe absent ou inférieur à 16 caractères. La plateforme Render
 fournit HTTPS ; ne pas exposer cette authentification sur Internet en HTTP simple.
 
@@ -91,7 +98,8 @@ message d'erreur pour diagnostiquer l'accès ou le service officiel.
 - Serveur Waitress réellement démarré avec une configuration analogue à Render.
 - Refus de l'accès anonyme aux données ; `/healthz` fonctionnel.
 - Jeu complet de 2 672 parcelles ; fiche 607 avec 10 logements déclarés.
-- Version inchangée après arrêt et redémarrage sur le même stockage.
+- Version inchangée après arrêt et redémarrage tant que les fichiers sont conservés ;
+  réinitialisation depuis le CSV GitHub vérifiée lorsque le stockage temporaire disparaît.
 - Tests API, contrôle de la collecte et parcours Chromium du bouton.
 
 Ces vérifications sont locales. Le Blueprint, le domaine HTTPS et l'accès SIGIP de
@@ -134,3 +142,22 @@ cliquer sur le bouton et attendre une réponse `termine` ou `aucun_changement` :
 l'accès SIGIP reste bloqué dans l'environnement de ce chat malgré son ajout
 au brouillon. Aucun déploiement Render ni réussite réseau SIGIP ne sont attestés
 par les seuls tests locaux de l'interface.
+
+## Actualisation sur l’offre gratuite
+
+Le bouton et le serveur Python restent actifs sur Free. Le serveur télécharge les
+sources accessibles, recalcule les critères et active une nouvelle version après
+contrôle, comme auparavant. Si le téléchargement échoue, la dernière version valide
+présente sur ce serveur reste active.
+
+La gratuité ne garantit ni l’accès à chaque source ni des ressources suffisantes
+pour la collecte complète : ce test reste nécessaire après le déploiement réel.
+Le serveur peut se mettre en veille ; la première ouverture peut être lente et
+une interruption pendant un calcul peut obliger à relancer l’actualisation.
+Il n’y a ni tâche mensuelle automatique ni sauvegarde persistante ajoutée.
+
+Si un Blueprint payant a déjà été préparé dans votre compte, ne supposez pas que
+sa configuration a changé : resynchroniser le Blueprint depuis `main` et vérifier
+le plan Free et l’absence de disque avant de valider. Si un service payant existe
+déjà, examiner ses ressources et sa facturation dans Render ; ce changement GitHub
+ne supprime ni ne rembourse automatiquement des ressources existantes.

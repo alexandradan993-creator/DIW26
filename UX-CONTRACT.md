@@ -29,7 +29,7 @@ La carte et la liste sont une exploration locale de l'ensemble borné de Pully, 
 
 Les données descriptives ISOS et dangers ne modifient pas les exclusions métier. Les inconnues restent inconnues. L'outil ne certifie ni la constructibilité ni une valeur immobilière.
 
-## Première publication privée
+## Première publication privée sur l’offre gratuite
 
 L'interface et l'API sont hébergées ensemble sur Render selon `render.yaml` et
 `docs/MISE_EN_LIGNE.md`. Le serveur de publication demande une authentification
@@ -62,3 +62,12 @@ observations et annotations ; aucune collecte n'est déclenchée. Les anciennes
 mesures de pente exportées sont reprises si leur CSV n'était pas archivé. Une
 version sans contour archivé ne peut être migrée en mélangeant les sources actuelles.
 Une erreur de préparation laisse la version précédente active.
+
+## Stockage temporaire de la démo gratuite
+
+`render.yaml` sélectionne Free, sans disque persistant. Le bouton d’actualisation
+conserve le même contrat, mais la dernière version valide n’est disponible que
+tant que les fichiers du serveur existent. En cas de perte du stockage temporaire,
+la base initiale est recréée depuis le CSV GitHub configuré. Les notes locales du
+navigateur ne sont pas stockées dans ce répertoire ; les annotations serveur,
+elles, n’ont pas de conservation durable sur cette offre.

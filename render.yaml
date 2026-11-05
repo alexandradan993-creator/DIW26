@@ -1,27 +1,22 @@
-# Première version privée : le plan et le disque sont facturés par Render.
+# Démonstration gratuite : stockage temporaire, réinitialisable par Render.
 # Le Blueprint ne se déploie pas tant qu'il n'est pas validé dans votre compte.
 services:
   - type: web
     name: foncimo-pully
     runtime: python
     branch: main
-    plan: starter
-    numInstances: 1
+    plan: free
     autoDeployTrigger: "off"
     buildCommand: python -m pip install -r API/requirements_web.txt
     startCommand: python API/application_web.py
     healthCheckPath: /healthz
-    disk:
-      name: foncimo-data
-      mountPath: /var/data/foncimo
-      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.14
       - key: FONCIMO_REFERENCE
         value: API/bases/pully_parcelles_2026-11-04_1614.csv
       - key: FONCIMO_STORAGE
-        value: /var/data/foncimo/versions
+        value: /tmp/foncimo/versions
       - key: FONCIMO_USERNAME
         value: foncimo
       - key: FONCIMO_PASSWORD
