@@ -161,3 +161,21 @@ sa configuration a changé : resynchroniser le Blueprint depuis `main` et vérif
 le plan Free et l’absence de disque avant de valider. Si un service payant existe
 déjà, examiner ses ressources et sa facturation dans Render ; ce changement GitHub
 ne supprime ni ne rembourse automatiquement des ressources existantes.
+
+## Correctif mémoire après le premier essai Render Free
+
+Le premier build du commit `89f99d4` réussit, mais Render arrête l'initialisation
+pour dépassement de 512 Mio. Le pic est reproduit localement à environ 592 Mio :
+la sérialisation complète des fiches JSON crée des copies temporaires volumineuses.
+`write_json` écrit désormais progressivement dans un fichier temporaire, puis
+remplace atomiquement la destination. Une erreur de sérialisation conserve le
+fichier précédent. Un verrou d'initialisation appartenant à un processus mort peut
+être repris ; un propriétaire encore actif conserve son verrou. Aucun dossier
+candidat ou jeu de données n'est supprimé par cette reprise.
+
+Validation locale après correctif : 36 tests API/collecte/stockage passent ;
+initialisation complète à environ 249 Mio de pic, puis lecture de l'interface et
+d'une fiche à environ 429 Mio. Les 2 672 EGRID et les couleurs 291/526/1 855 sont
+conservés ; la fiche 607 affiche 10 logements et la divergence de rattachement 608.
+Ces mesures locales ne prouvent pas que la collecte réseau complète tient sur Free.
+Les règles métier, l'authentification et les contrôles de collecte restent inchangés.

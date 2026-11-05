@@ -37,7 +37,17 @@ def read_csv(path):
 
 
 def write_json(path,value):
-    ecrire_atomique(path,json.dumps(value,ensure_ascii=False,indent=2,allow_nan=False)+'\n')
+    # Écrire progressivement : les fiches complètes dépassent 80 Mo et dumps()
+    # en conserve plusieurs copies en mémoire avant même l'écriture.
+    path.parent.mkdir(parents=True,exist_ok=True)
+    fd,tmp=tempfile.mkstemp(dir=path.parent,suffix='.tmp')
+    try:
+        with os.fdopen(fd,'w',encoding='utf-8',newline='') as stream:
+            json.dump(value,stream,ensure_ascii=False,indent=2,allow_nan=False)
+            stream.write('\n')
+        os.replace(tmp,path)
+    finally:
+        Path(tmp).unlink(missing_ok=True)
 
 
 @lru_cache(maxsize=4)
@@ -74,9 +84,26 @@ class UpdateService:
         spec=importlib.util.spec_from_file_location('_criteres_fiches',ROOT/'code/criteres_category.py')
         self.criteria=importlib.util.module_from_spec(spec);spec.loader.exec_module(self.criteria)
         self.classifier_sha=sha(ROOT/'code/criteres_category.py')
+        self._recover_initialisation()
         self._initialise()
         self._recover_interrupted()
         self._upgrade_interface()
+
+    def _recover_initialisation(self):
+        """Un arrêt brutal peut laisser un verrou avant la première version."""
+        if self.pointer.exists() or not self.lock.exists():return
+        before=self.lock.stat()
+        try:owner=json.loads(self.lock.read_text())
+        except (ValueError,OSError):return
+        if not isinstance(owner,dict) or owner.get('operation_id')!='initialisation':return
+        pid=owner.get('pid')
+        if type(pid) is not int or pid<=0:return
+        try:os.kill(pid,0)
+        except ProcessLookupError:
+            current=self.lock.stat()
+            if (current.st_ino,current.st_mtime_ns)==(before.st_ino,before.st_mtime_ns):
+                self.lock.unlink()
+        except PermissionError:return
 
     def _recover_interrupted(self):
         if not self.lock.exists():return
