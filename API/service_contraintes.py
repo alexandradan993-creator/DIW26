@@ -63,6 +63,9 @@ class OperationState(Etat):
 
     def maj(self,**values):
         super().maj(**values)
+        if any(key in values for key in ('etape','statut')):
+            print('Foncimo opération '+json.dumps({key:self.data.get(key) for key in
+                ('operation_id','statut','etape')},ensure_ascii=False),flush=True)
         history=self.folder/'operations';history.mkdir(exist_ok=True)
         write_json(history/(self.data['operation_id']+'.json'),self.data)
 

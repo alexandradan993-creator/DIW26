@@ -179,3 +179,30 @@ d'une fiche à environ 429 Mio. Les 2 672 EGRID et les couleurs 291/526/1 855 so
 conservés ; la fiche 607 affiche 10 logements et la divergence de rattachement 608.
 Ces mesures locales ne prouvent pas que la collecte réseau complète tient sur Free.
 Les règles métier, l'authentification et les contrôles de collecte restent inchangés.
+
+## Diagnostic des téléchargements de l'actualisation
+
+Le suivi serveur expose maintenant `telechargement` (source, couche, action,
+numéro de requête, tentative, état, octets reçus et durée) et
+`progression_reseau`. L'étape affichée par l'interface reprend la source et la
+couche en cours. Les logs `Foncimo collecte` sont immédiatement écrits avec
+l'identifiant d'opération ; ils ne contiennent ni URL complète, ni en-tête,
+ni secret, ni contenu cadastral. Les inventaires et lots ArcGIS contrôlés ainsi
+que les effectifs SIGIP reçus sont consignés au fur et à mesure. Une réponse
+reçue n'est pas présentée comme une validation finale de la collecte.
+
+Le transport de l'adaptateur applicatif utilise un processus Python temporaire
+par requête : limite effective de 45 secondes connexion et lecture comprises,
+deux tentatives maximum sur dépassement de délai, attente réseau de 20 secondes
+et réponse limitée à 64 Mio. Le processus est arrêté et attendu après dépassement,
+puis ses fichiers temporaires sont supprimés. La récupération de base et celle
+des observations cantonales sont chacune bornées à 20 minutes au travers de
+leurs requêtes. Cette limite ne couvre pas les calculs géométriques ultérieurs.
+TLS et les contrôles de complétude restent actifs. Le collecteur métier de
+l'équipe n'est pas modifié. Les tests injectent leur transport synthétique.
+
+En cas d'échec, l'opération passe en erreur avec source/couche/action ; aucune
+version partielle n'est activée et la version valide présente reste utilisée.
+Après arrêt du serveur ou perte de /tmp, la reprise et les limites de rétention
+Free restent celles décrites plus haut. Ce suivi ne garantit pas qu'une collecte
+complète tienne en mémoire sur Free.

@@ -15,7 +15,8 @@ def collecter(stage, etat, precedentes, _module=None):
         spec = importlib.util.spec_from_file_location('_collecteur_application', ROOT/'API/actualiser_pully.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-    transport = module.telecharger
+    from suivi_collecte import SuiviCollecte
+    transport = SuiviCollecte(etat, module.telecharger if _module is not None else None)
     original_wfs = module.wfs_requete
     inventories = []
     contours = []
@@ -32,6 +33,7 @@ def collecter(stage, etat, precedentes, _module=None):
                 if ids is None or len(ids) != len(set(ids)):
                     raise ValueError('Inventaire ArcGIS absent ou dupliqué')
                 inventories.append((url, dict(params), set(ids)))
+                etat.maj(inventaire_recu=len(ids))
             if 'objectIds' in params:
                 attendus = {int(i) for i in params['objectIds'].split(',')}
                 champ = next((f['name'] for f in rep.get('fields', []) if f['type']=='esriFieldTypeOID'), 'OBJECTID')
@@ -41,6 +43,8 @@ def collecter(stage, etat, precedentes, _module=None):
                 sr = rep.get('spatialReference', {})
                 if sr.get('latestWkid', sr.get('wkid')) != 2056:
                     raise ValueError('Réponse ArcGIS hors MN95')
+                etat.maj(objets_dernier_lot=len(recus))
+                print(f'Foncimo lot contrôlé : {len(recus)} objets reçus', flush=True)
                 if url.endswith('/272/query'):
                     contours.extend(rep['features'])
         return contenu
@@ -60,7 +64,22 @@ def collecter(stage, etat, precedentes, _module=None):
             ids = [e.get('gml_id') for e in resultat]
             if any(not i for i in ids) or len(ids)!=len(set(ids)):
                 raise ValueError(f'Identifiants SIGIP absents/dupliqués : {couche}')
+            etat.data['sources']['sigip_'+couche] = {
+                'objets':len(resultat), 'verifie_utc':module.maintenant(),
+                'etat':'reçue ; contrôles finaux en attente'}
+            etat.maj()
         return resultat
+
+    original_arcgis = getattr(module, "arcgis_requete", None)
+    if original_arcgis is not None:
+        def controle_arcgis(layer_id, where, bbox=None):
+            result = original_arcgis(layer_id, where, bbox)
+            etat.data["sources"]["geovd_"+str(layer_id)] = {
+                "objets":len(result), "verifie_utc":module.maintenant(),
+                "etat":"reçue ; contrôles finaux en attente"}
+            etat.maj(etape=f"GEO.vd · couche {layer_id} · {len(result)} objets reçus ; contrôles finaux en attente")
+            return result
+        module.arcgis_requete = controle_arcgis
 
     module.telecharger = controle_transport
     module.wfs_requete = controle_wfs

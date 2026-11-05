@@ -48,9 +48,16 @@ def export_observations(reference,contours,output,etat,collect=None):
     spec=importlib.util.spec_from_file_location('_exporteur_isole',Path(existing.__file__))
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     module.SpatialLayer=DetailedLayer
+    from suivi_collecte import SuiviCollecte
+    transport=SuiviCollecte(etat)
+    def request(url, params=None):
+        reply=json.loads(transport(url,params,post=params is not None))
+        if not isinstance(reply,dict) or "error" in reply:
+            raise ValueError("Réponse ArcGIS cantonale invalide")
+        return reply
     fetched={}
     def checked_collect(layer,bbox):
-        bundle=(collect or existing.collect_layer)(layer,bbox)
+        bundle=collect(layer,bbox) if collect else existing.collect_layer(layer,bbox,request=request)
         expected={404:'vd.perimetre_fonde_sur_isos',422:'vd.carte_synthetique_danger_naturel'}[layer]
         if bundle['metadata'].get('name')!=expected:
             raise ValueError('La source a changé de couche : '+str(layer))
