@@ -6,7 +6,46 @@ import xml.etree.ElementTree as ET
 from suivi_collecte import download
 
 
+def reseau():
+    """Sondes sans données applicatives ; conserver tout proxy configuré."""
+    import os
+    import socket
+    import ssl
+    def trace(**data):
+        print('Foncimo réseau SIGIP '+json.dumps(data),flush=True)
+    if any(os.environ.get(key) for key in ('HTTPS_PROXY','https_proxy','ALL_PROXY','all_proxy')):
+        trace(etat='sondes directes ignorées : proxy configuré')
+        return
+    host='www.sigip.ch'
+    try:
+        addresses=socket.getaddrinfo(host,443,type=socket.SOCK_STREAM)
+        seen=set()
+        for family,kind,proto,_,address in addresses:
+            if address[0] in seen:continue
+            seen.add(address[0])
+            if len(seen)>4:break
+            phase='connexion TCP'
+            try:
+                with socket.socket(family,kind,proto) as connection:
+                    connection.settimeout(5)
+                    connection.connect(address)
+                    trace(ip=address[0],phase=phase,etat='ok')
+                    phase='négociation TLS'
+                    with ssl.create_default_context().wrap_socket(connection,server_hostname=host) as secured:
+                        trace(ip=address[0],phase=phase,etat='ok',tls=secured.version())
+            except Exception as error:
+                trace(ip=address[0],phase=phase,etat='erreur',type=type(error).__name__)
+    except Exception as error:
+        trace(phase='DNS',etat='erreur',type=type(error).__name__)
+
+
+def autorise(flag, jusqua):
+    try:return flag=='1' and time.time()<float(jusqua)
+    except (ValueError,TypeError):return False
+
+
 def verifier(transport=download):
+    if transport is download:reseau()
     url='https://www.sigip.ch/mapserv_proxy'
     common={'SERVICE':'WFS','VERSION':'1.1.0','REQUEST':'GetFeature',
             'TYPENAME':'pully_recensement_provisoire_batiments'}

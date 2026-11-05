@@ -129,9 +129,9 @@ def main():
     service = UpdateService(storage=storage, reference=reference, base_collector=collecter)
     app = create_app(service, username=username, password=password)
     print('Foncimo prêt : interface et API, authentification activée.', flush=True)
-    if os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP') == '1':
+    from diagnostic_sigip import autorise, verifier
+    if autorise(os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP'),os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP_UNTIL')):
         import threading
-        from diagnostic_sigip import verifier
         threading.Thread(target=verifier,name='diagnostic-sigip',daemon=True).start()
     # Une instance et un processus ; stockage temporaire sur Free.
     serve(app, host=os.environ.get('HOST', '0.0.0.0'), port=int(os.environ.get('PORT', '8000')),
