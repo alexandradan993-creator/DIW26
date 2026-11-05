@@ -1,14 +1,14 @@
 """Filtrage explicable des parcelles selon ``code/criteres.json``.
 
-Module autonome (Python 3.10+, bibliothèque standard), compatible avec le dépôt
+Module autonome (Python 3.10+, bibliothèque standard), sans filtre de pente, compatible avec le dépôt
 DIW26. Aucune écriture dans ``classification.py`` ou ``prospection.py``.
 
-Les champs non établis (pleine terre, distances réglementaires, dangers, accès,
+Les champs non établis (hauteurs, pleine terre, distances réglementaires, dangers, accès,
 ISOS et ratio RD) ne sont JAMAIS supposés favorables. Le filtrage retourne :
 ``rouge`` si exclusion confirmée, ``jaune`` si information obligatoire
-manquante, couverture défavorable, intersection forestière mesurée ou voisinage
-de parcelle contenant de la forêt (si contours disponibles), et
-``vert`` si toutes les règles actives passent sans alerte forestière détectée.
+manquante, couverture défavorable ou intersection forestière mesurée, et
+``vert`` si toutes les règles actives passent sans intersection forestière.
+Le voisinage cadastral d’une parcelle forestière est descriptif uniquement.
 
 Les seuils de potentiel fort/moyen et ratio RD sont des SIGNAUX, pas des couleurs.
 Ce fichier ne certifie pas la constructibilité.
@@ -26,7 +26,6 @@ from typing import Any
 
 DEFAULT_CONFIG = Path(__file__).with_name("criteres.json")
 DEFAULT_DATA = Path(__file__).resolve().parents[1] / "pully_parcelles.csv"
-DEFAULT_SLOPES = Path(__file__).resolve().parents[1] / "data" / "pentes_parcelles" / "pentes_parcelles.csv"
 DEFAULT_CONTOURS = Path(__file__).resolve().parents[1] / "data" / "parcelles" / "contours.geojson"
 
 
@@ -76,14 +75,13 @@ def validate_config(cfg: dict) -> None:
         "zone_reservee_pleine_terre": ("seuil_exclusion_pourcentage", "seuil_malus_pourcentage"),
         "ratio_sous_exploitation_rd": ("seuil_fort_potentiel", "seuil_moyen_potentiel"),
         "reculs_rdppf_metres": ("lisiere_foret", "cours_d_eau", "route"),
-        "zonage_et_dangers": ("pente_max_autorisee_pourcentage", "penalite_isos", "exclure_dangers_naturels", "exclure_acces_complique"),
+        "zonage_et_dangers": ("penalite_isos", "exclure_dangers_naturels", "exclure_acces_complique"),
     }.items():
         if not isinstance(cfg[section], dict) or set(cfg[section]) != set(keys):
             raise ValueError(f"criteres.json: section invalide {section}")
     numeric = [cfg["surface_min_m2"], cfg["emprise_max"]]
     for name in ("surface_parcelle", "zone_reservee_pleine_terre", "ratio_sous_exploitation_rd", "reculs_rdppf_metres"):
         numeric.extend(cfg[name].values())
-    numeric.append(cfg["zonage_et_dangers"]["pente_max_autorisee_pourcentage"])
     if any(type(v) not in (float, int) or not math.isfinite(v) or v < 0 for v in numeric):
         raise ValueError("Les seuils doivent être des nombres finis positifs ou nuls")
     if cfg["emprise_max"] > 1:
@@ -187,10 +185,22 @@ INDICATOR_FIELDS = [
     "voisine_parcelle_avec_foret", "distance_parcelle_forestiere_m",
     "egrid_voisin_forestier", "methode_voisinage_foret",
     "bordure_foret_confirmee",
+    "cos_zone_dominante", "emprise_max_theorique_cos_m2",
+    "surface_exploitable_avec_batiment_m2", "surface_exploitable_sans_batiment_m2",
+    "surface_libre_hors_batiment_m2", "surface_exploitable_statut",
+    "ius_zone_dominante", "plancher_max_theorique_ius_m2",
+    "rcb_nombre_niveaux_max", "hauteur_reglementaire_max_m",
+    "hauteur_batiment_existant_m", "marge_hauteur_m",
+    "piste_surelevation", "surélévation_verifiee",
+    "surelevation_etude_applicable", "motif_surelevation",
+    "hauteur_reference_scenario_m", "niveaux_reference_scenario_min",
+    "niveaux_reference_scenario_max", "niveaux_supplementaires_scenario_min",
+    "niveaux_supplementaires_scenario_max",
+    "surface_plancher_supplementaire_scenario_max_m2",
 ]
 
 
-def csv_indicators(row: dict) -> dict:
+def csv_indicators(row: dict, min_area_m2: float = 600) -> dict:
     """Mesures et catégories cadastrales directement établies par le CSV.
 
     Une intersection positive signifie une distance géométrique de 0 m entre
@@ -226,6 +236,69 @@ def csv_indicators(row: dict) -> dict:
         return round(v, 2) if v is not None and v >= 0 else None
 
     coverage = pct(footprint) if (area is not None and footprint is not None and 0 <= footprint <= area) else None
+    # Capacite au sol, indicative uniquement : COS x surface de la parcelle.
+    # Aucun recul, servitude, zone reservee ou droit a batir ne peut etre
+    # confirme depuis ce seul CSV. Ne pas confondre emprise et surface plancher.
+    cos = number(pick(row, "cos_source_zone_dominante"))
+    if cos is not None and not (0 < cos <= 1):
+        cos = None
+    ius = number(pick(row, "ius_source_zone_dominante"))
+    if ius is not None and ius <= 0:
+        ius = None
+    total_emprise = round(area * cos, 2) if area is not None and cos is not None else None
+    rest_emprise = (round(max(0.0, total_emprise - footprint), 2)
+                   if total_emprise is not None and footprint is not None and 0 <= footprint <= area else None)
+    no_building_emprise = total_emprise
+    surface_libre = round(area - footprint, 2) if area is not None and footprint is not None and 0 <= footprint <= area else None
+    niveaux = number(pick(row, "rcb_nombre_niveaux_max"))
+    # H_MAX des zones du CSV n'a pas de valeurs; ne jamais deduire une hauteur
+    # en metres depuis le nombre de niveaux. Valeurs explicites seulement.
+    regulatory_height = number(pick(row, "hauteur_max_reglementaire_m"))
+    existing_height = number(pick(row, "hauteur_batiment_existant_m"))
+    if regulatory_height is not None and regulatory_height <= 0:
+        regulatory_height = None
+    if existing_height is not None and existing_height < 0:
+        existing_height = None
+    remaining_height = (round(regulatory_height - existing_height, 2)
+                        if regulatory_height is not None and existing_height is not None else None)
+    building_count = number(pick(row, "batiments_nombre"))
+    has_building = (building_count is not None and building_count > 0
+                    and footprint is not None and footprint > 0)
+    # Hypothèse fournie pour le dépistage, PAS un droit de construire vérifié :
+    # 2 à 3 niveaux habitables et 10 m au faîte, zones faible/moyenne/villas.
+    # Ne l'utiliser QUE pour les parcelles déjà bâties sans potentiel au sol
+    # suffisant : parcelle sous 600 m² OU emprise COS résiduelle épuisée.
+    area_below_min = area is not None and area < min_area_m2
+    ground_exhausted = rest_emprise is not None and rest_emprise <= 0.01
+    permitted_zoning = eligible_zone(row) is True
+    lacks_ground_room = area_below_min or ground_exhausted
+    study = bool(has_building and permitted_zoning and lacks_ground_room)
+    reason = (f"surface parcellaire < {min_area_m2:g} m²" if area_below_min else
+              "emprise COS résiduelle nulle" if ground_exhausted else "")
+    # Nombre de niveaux existants déclaré = maximum observé parmi les bâtiments.
+    # S'il n'est pas entier ou que la donnée manque, ne pas inventer d'étage.
+    observed_levels = (int(niveaux) if niveaux is not None and niveaux >= 1
+                       and niveaux.is_integer() else None)
+    extra_min = extra_max = extra_floor_upper = None
+    if study and observed_levels is not None:
+        extra_min = max(0, 2 - observed_levels)
+        extra_max = max(0, 3 - observed_levels)
+        if extra_max > 0:
+            extra_floor_upper = round(footprint * extra_max, 2)
+    if not study:
+        height_path = "Sans objet : étude réservée aux parcelles déjà bâties sans marge au sol"
+    elif observed_levels is None:
+        height_path = "À examiner : nombre de niveaux existants non renseigné"
+    elif observed_levels >= 3:
+        height_path = "Aucun étage supplémentaire sous l'hypothèse de 3 niveaux"
+    elif remaining_height is not None and remaining_height <= 0:
+        height_path = "Aucune marge de hauteur selon les hauteurs mesurées fournies"
+    else:
+        height_path = (f"À examiner : jusqu'à {extra_max} niveau(x) supplémentaire(s) "
+                       "selon hypothèse 2–3 niveaux / faîte 10 m; "
+                       "hauteur réelle, combles, structure et autorisation non vérifiés")
+    capacity_status = ("COS absent : capacite non calculable" if cos is None else
+                       "Indicatif : hors reculs, servitudes et autres restrictions")
     # Les distances hors intersection ne sont pas déductibles du CSV.
     forest_dist = 0.0 if forest is not None and forest > 0 else None
     water_dist = 0.0 if water is not None and water > 0 else None
@@ -252,6 +325,29 @@ def csv_indicators(row: dict) -> dict:
         "distance_lisiere_foret_m": forest_dist,
         "distance_cours_d_eau_m": water_dist,
         "source_indicateurs": "pully_parcelles.csv",
+        "cos_zone_dominante": cos,
+        "emprise_max_theorique_cos_m2": total_emprise,
+        "surface_exploitable_avec_batiment_m2": rest_emprise,
+        "surface_exploitable_sans_batiment_m2": no_building_emprise,
+        "surface_libre_hors_batiment_m2": surface_libre,
+        "surface_exploitable_statut": capacity_status,
+        "ius_zone_dominante": ius,
+        "plancher_max_theorique_ius_m2": round(area * ius, 2) if area is not None and ius is not None else None,
+        "rcb_nombre_niveaux_max": int(niveaux) if niveaux is not None and niveaux >= 0 else None,
+        "hauteur_reglementaire_max_m": regulatory_height,
+        "hauteur_batiment_existant_m": existing_height,
+        "marge_hauteur_m": remaining_height,
+        "piste_surelevation": height_path,
+        "surélévation_verifiee": "Non : examen réglementaire requis",
+        "surelevation_etude_applicable": "Oui" if study else "Non",
+        "motif_surelevation": reason if study else "",
+        "hauteur_reference_scenario_m": 10.0 if study else None,
+        "niveaux_reference_scenario_min": 2 if study else None,
+        "niveaux_reference_scenario_max": 3 if study else None,
+        "niveaux_supplementaires_scenario_min": extra_min,
+        "niveaux_supplementaires_scenario_max": extra_max,
+        "surface_plancher_supplementaire_scenario_max_m2": extra_floor_upper,
+
     }
 
 
@@ -338,9 +434,8 @@ def compute_forest_neighbor_index(rows: list[dict], contours_path: Path,
         }
     return result
 
-def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
-                    forest_neighbor_info: dict | None = None) -> dict:
-    """Evaluate a cadastral row and optional slope row against *all* JSON criteria.
+def evaluate_parcel(row: dict, cfg: dict, forest_neighbor_info: dict | None = None) -> dict:
+    """Evaluate a cadastral row without using terrain slope.
 
     Each check returns ``ok``, ``echec``, ``inconnu``, ``alerte``, ``note``, or ``sans_objet``.
     ``obligatoire`` indicates a hard filter (unknown makes overall status grey).
@@ -380,6 +475,13 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
     coverage = None if area is None or footprint is None or not 0 <= footprint <= area else footprint / area
     minimum("surface_min_m2", "Surface de parcelle minimale (m²)", area, cfg["surface_min_m2"])
     maximum("emprise_max", "Rapport emprise bâtie / parcelle", coverage, cfg["emprise_max"], False)
+
+    # Piste de surelevation : informative, elle ne remplace jamais l'accord communal.
+    height_data = csv_indicators(row, cfg["surface_min_m2"])
+    if height_data["surelevation_etude_applicable"] == "Oui":
+        add("piste_surelevation", "Etude de surélévation (bâtiment existant et emprise au sol insuffisante)",
+            height_data["piste_surelevation"], "hypothèse 2–3 niveaux, 10 m au faîte", "note", False,
+            "Étude de faisabilité seulement : hauteur et autorisation non vérifiées.")
 
     # Area tiers are purely informational and never create a red exclusion.
     tiers = cfg["surface_parcelle"]
@@ -442,16 +544,6 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
             "Recul indicatif à vérifier selon les règles applicables; non éliminatoire.",
         )
 
-    slope_data = slope_row or {}
-    slope = number(pick(slope_data, "pente_mediane_pct"))
-    valid = str(slope_data.get("statut_calcul", "")).strip() in ("calcule", "calcule_a_verifier")
-    if slope is None or not valid or slope < 0:
-        slope = number(pick(row, "pente_mediane_pct", "pente_pct"))
-    if slope is not None and slope < 0:
-        slope = None
-    maximum("pente_max", "Pente médiane maximale (%)", slope,
-            cfg["zonage_et_dangers"]["pente_max_autorisee_pourcentage"])
-
     zone_cfg = cfg["zonage_et_dangers"]
     isos = flag(pick(row, "isos_present", "dans_perimetre_isos"))
     add("isos", "Présence ISOS (alerte)", isos, zone_cfg["penalite_isos"],
@@ -489,16 +581,16 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
         "Intersection positive : vigilance forestière, classement jaune sauf exclusion rouge.",
     )
 
-    # Mesure de voisinage cadastrale = INDICE, pas lisière forestière prouvée.
+    # Mesure de voisinage cadastrale = INDICE descriptif, jamais un malus couleur.
     neighbor = forest_neighbor_info or {}
     near_forest_parcel = neighbor.get("voisine_parcelle_avec_foret") == "Oui"
     add(
-        "voisin_parcelle_forestiere", "Voisin d'une parcelle contenant de la forêt (indice)",
+        "voisin_parcelle_forestiere", "Voisin d'une parcelle contenant de la forêt (information)",
         neighbor.get("distance_parcelle_forestiere_m"), None,
-        "alerte" if near_forest_parcel else "inconnu" if not neighbor or
+        "note" if near_forest_parcel else "inconnu" if not neighbor or
         str(neighbor.get("voisine_parcelle_avec_foret", "")).startswith("Inconnu") else "ok",
         False,
-        "Distance entre contours cadastraux, NON distance à la forêt. Alerte jaune de précaution.",
+        "Distance entre parcelles cadastrales et NON lisière forestière : information seulement, sans effet sur la couleur.",
     )
 
     failed = [k for k, v in checks.items() if v["etat"] == "echec" and v["obligatoire"]]
@@ -508,12 +600,15 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
                               if v["etat"] == "echec" and not v["obligatoire"]]
     advisory_notes = [k for k, v in checks.items() if v["etat"] == "note"]
 
-    # Area remains exclusively eliminatory; coverage + forest affect green/yellow.
+    # La surface < seuil reste eliminatoire pour l'extension au sol.
+    # Une surélévation potentielle est une PISTE SEPARÉE, pas une dérogation
+    # automatique au minimum de surface ni une autorisation verifiee.
+
     evaluation_keys = ["emprise_max"]
 
     if failed:
         status = "rouge"
-    elif unknown or forest_intersects or near_forest_parcel:
+    elif unknown or forest_intersects:
         status = "jaune"
     elif all(checks[key]["etat"] == "ok" for key in evaluation_keys):
         status = "vert"
@@ -525,8 +620,8 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
         "filtres_echoues": failed, "filtres_inconnus": unknown, "alertes": alerts,
         "criteres_evaluation_defavorables": evaluation_unfavorable, "notes_reglementaires": advisory_notes,
         "zone_dominante": pick(row, "zone_dominante"), "surface_m2": area, "emprise_ratio": coverage, "pleine_terre_pct": earth_pct,
-        "ratio_rd": ratio, "pente_mediane_pct": slope,
-        **csv_indicators(row),
+        "ratio_rd": ratio,
+        **height_data,
         **{k: neighbor.get(k) for k in ("voisine_parcelle_avec_foret",
             "distance_parcelle_forestiere_m", "egrid_voisin_forestier", "methode_voisinage_foret")},
         "bordure_foret_confirmee": "Inconnu (pas de géométrie forestière)",
@@ -534,34 +629,27 @@ def evaluate_parcel(row: dict, cfg: dict, slope_row: dict | None = None,
 
 
 def run(input_csv: Path = DEFAULT_DATA, config: Path = DEFAULT_CONFIG,
-        slopes_csv: Path | None = DEFAULT_SLOPES, output: Path | None = None,
+        output: Path | None = None,
         contours_geojson: Path | None = DEFAULT_CONTOURS,
         tolerance_voisin_m: float = 1.0) -> dict:
     cfg = load_criteria(config)
-    slope_index: dict[str, dict] = {}
-    if slopes_csv is not None and slopes_csv.exists():
-        with slopes_csv.open(encoding="utf-8-sig", newline="") as f:
-            for r in csv.DictReader(f):
-                if r.get("egrid"):
-                    slope_index[r["egrid"]] = r
     with input_csv.open(encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
     neighbor_index = {}
     geometry_used = bool(contours_geojson is not None and contours_geojson.is_file())
     if geometry_used:
         neighbor_index = compute_forest_neighbor_index(rows, contours_geojson, tolerance_voisin_m)
-    results = [evaluate_parcel(r, cfg, slope_index.get(r.get("egrid")),
-                               neighbor_index.get(r.get("egrid"))) for r in rows]
+    results = [evaluate_parcel(r, cfg, neighbor_index.get(r.get("egrid"))) for r in rows]
     summary = {"total": len(results), "effectifs": dict(Counter(r["statut_filtrage_criteres"] for r in results)),
                "voisinage_calcule": geometry_used,
                "nombre_voisins_parcelles_forestieres": sum(r["voisine_parcelle_avec_foret"] == "Oui" for r in results),
-               "regle": "Rouge: exclusion confirmée; jaune: inconnus obligatoires, emprise défavorable, intersection de forêt ou voisin d'une parcelle avec forêt (proxy, si contours disponibles); vert: autres critères favorables"}
+               "regle": "Rouge: exclusion confirmée; jaune: inconnus obligatoires, emprise défavorable, intersection forêt; voisinage forestier informatif seulement; surélévation indicative hors couleur"}
     if output is not None:
         if output.resolve() in {input_csv.resolve(), config.resolve()}:
             raise ValueError("La sortie ne peut pas écraser une entrée")
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8-sig", newline="") as f:
-            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "criteres_evaluation_defavorables", "notes_reglementaires", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd", "pente_mediane_pct"] + INDICATOR_FIELDS
+            fields = ["egrid", "numero_parcelle", "zone_dominante", "statut_filtrage_criteres", "filtres_echoues", "filtres_inconnus", "alertes", "criteres_evaluation_defavorables", "notes_reglementaires", "filtres", "surface_m2", "emprise_ratio", "pleine_terre_pct", "ratio_rd"] + INDICATOR_FIELDS
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
             for r in results:
@@ -573,16 +661,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
-    parser.add_argument("--pentes", type=Path, default=DEFAULT_SLOPES)
     parser.add_argument("--output", type=Path, default=Path("code/resultats_criteres_category.csv"))
     parser.add_argument("--contours", type=Path, default=DEFAULT_CONTOURS,
                         help="GeoJSON contours cadastraux WGS84; absent = pas de voisinage calculé")
     parser.add_argument("--tolerance-voisin-m", type=float, default=1.0,
                         help="Tolérance entre contours cadastraux, en mètres (défaut: 1)")
     args = parser.parse_args()
-    print(json.dumps(run(args.input, args.config, args.pentes, args.output,
+    print(json.dumps(run(args.input, args.config, args.output,
                              args.contours, args.tolerance_voisin_m), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
     main()
+
