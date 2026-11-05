@@ -71,7 +71,7 @@ class OperationState(Etat):
 
 
 class UpdateService:
-    def __init__(self,storage=None,reference=None,contours=None,config=None,slopes=None,collector=None,base_collector=None):
+    def __init__(self,storage=None,reference=None,contours=None,config=None,slopes=None,collector=None,base_collector=None,mode_actualisation="complet"):
         self.storage=Path(storage or ROOT/'API/versions')
         self.reference=Path(reference or DEFAULT_REFERENCE)
         self.contours=Path(contours or ROOT/'data/parcelles/source_esri_lv95.json')
@@ -79,6 +79,7 @@ class UpdateService:
         self.slopes=Path(slopes or ROOT/'data/pentes_parcelles/pentes_parcelles.csv')
         self.collector=collector
         self.base_collector=base_collector
+        self.mode_actualisation=mode_actualisation
         self.storage.mkdir(parents=True,exist_ok=True)
         self.pointer=self.storage/'version_active.json'
         self.lock=self.storage/'actualisation.lock'
@@ -222,7 +223,10 @@ class UpdateService:
         from donnees_interface import altitudes_repere
         heights=altitudes_repere(tuple(tuple(row[7]) if row[7] else None for row in payload['parcels']))
         # Ne pas muter l'export immuable en cache ni imposer une migration des versions.
-        return dict(payload,parcels=[row[:9]+[height] for row,height in zip(payload['parcels'],heights)])
+        manifest=json.loads((folder/'manifest.json').read_text())
+        return dict(payload,actualisation={'mode':manifest.get('mode_actualisation','initiale'),
+                    'date':manifest.get('date_activation',manifest.get('date_creation'))},
+                    parcels=[row[:9]+[height] for row,height in zip(payload['parcels'],heights)])
 
     def active(self):
         return json.loads(self.pointer.read_text())['version']
@@ -234,15 +238,25 @@ class UpdateService:
         if not (folder/'manifest.json').exists():raise KeyError('Version inconnue')
         return folder
 
-    def _fiches(self,rows,crossings,provenance,cfg,version,slopes_path=None,contours_path=None):
+    def _fiches(self,rows,crossings,provenance,cfg,version,slopes_path=None,contours_path=None,patrimoine=None):
         from donnees_interface import voisinage
         neighbors=voisinage(rows,contours_path or self.contours,self.criteria)
         result={}
         for row in rows:
             egrid=row['egrid']
+            observation=(patrimoine or {}).get(egrid)
+            rules=dict(row)
+            if observation:
+                for kind,field in (('batiments','notes_batiment_existante_json'),('sites','notes_site_existante_json')):
+                    notes=observation['notes_'+kind]
+                    if notes:
+                        old=rules.get(field) or []
+                        if isinstance(old,str):old=json.loads(old)
+                        rules[field]=list(old)+[n for n in notes if n not in old]
             result[egrid]=dict(egrid=egrid,numero_parcelle=row.get('numero_parcelle'),version=version,
                 presente_derniere_collecte=True,zone_dominante=row.get('zone_dominante'),
-                classement=self.criteria.evaluate_parcel(row,cfg,neighbors.get(egrid)),
+                classement=self.criteria.evaluate_parcel(rules,cfg,neighbors.get(egrid)),
+                patrimoine_geovd=observation,
                 contraintes=contraintes(crossings.get(egrid),provenance),
                 alertes=(crossings.get(egrid) or {}).get('alertes_json',[]))
         return result
@@ -286,6 +300,32 @@ class UpdateService:
             return {'statut':'aucune_operation','version_active':self.active()}
         return json.loads(path.read_text())
 
+    def versions(self):
+        result=[];active=self.active()
+        for folder in self.storage.iterdir():
+            if not folder.is_dir() or not re.fullmatch(r'(initiale|application)-[a-f0-9]{32}',folder.name):continue
+            path=folder/'manifest.json'
+            if not path.exists():continue
+            data=json.loads(path.read_text())
+            result.append(dict(version=folder.name,active=folder.name==active,
+                date=data.get('date_activation',data.get('date_creation')),
+                mode=data.get('mode_actualisation','initiale'),bilan=data.get('bilan')))
+        return dict(versions=sorted(result,key=lambda r:r['date'] or '',reverse=True),
+                    stockage='temporaire')
+
+    def archive(self,version):
+        import zipfile
+        folder=self.version_path(version)
+        stream=tempfile.TemporaryFile()
+        try:
+            with zipfile.ZipFile(stream,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as archive:
+                for path in sorted(folder.rglob('*')):
+                    if path.is_file() and not path.is_symlink():archive.write(path,path.relative_to(folder))
+            stream.seek(0)
+            return stream
+        except Exception:
+            stream.close();raise
+
     def start(self,background=True):
         with self.mutex:
             if self.lock.exists():
@@ -313,6 +353,7 @@ class UpdateService:
 
     def _worker(self,state):
         previous=self.active()
+        state.maj(mode=self.mode_actualisation)
         try:
             with tempfile.TemporaryDirectory(prefix='.candidate-',dir=self.storage) as temp:
                 stage=Path(temp)
@@ -324,21 +365,28 @@ class UpdateService:
                 if self.slopes.exists():slope_snapshot.write_bytes(self.slopes.read_bytes())
                 previous_folder=self.version_path(previous)
                 old=json.loads((previous_folder/'parcelles.json').read_text())
+                patrimoine=None
                 if self.base_collector:
                     self.base_collector(stage,state,old)
+                    if self.mode_actualisation=='geovd':
+                        from patrimoine_geovd import collecter as collecter_patrimoine
+                        before_path=previous_folder/'patrimoine_geovd.json'
+                        before=json.loads(before_path.read_text()) if before_path.exists() else None
+                        patrimoine=collecter_patrimoine(contours,state,before)
+                        write_json(stage/'patrimoine_geovd.json',patrimoine)
                     from donnees_interface import derivations
                     derivations(stage,state)
                 rows=read_csv(reference);cfg=self.criteria.load_criteria(config)
                 destination,report,crossings=export_observations(reference,contours,stage/'croisements',state,self.collector)
                 previous_folder=self.version_path(previous)
-                old=json.loads((previous_folder/'parcelles.json').read_text())
-                old_fiches=json.loads((previous_folder/'fiches.json').read_text())
+                if patrimoine:report['sources'].update(patrimoine['sources'])
                 incoming={row['egrid']:row for row in rows}
                 missing=sorted(set(old)-set(incoming))
                 added=sorted(set(incoming)-set(old))
+                old_fiches=json.loads((previous_folder/'fiches.json').read_text()) if missing else {}
                 state.maj(etape='Validation de la version candidate')
                 version='application-'+uuid4().hex
-                fiches=self._fiches(rows,{r['egrid']:r for r in crossings},report,cfg,version,slope_snapshot,contours)
+                fiches=self._fiches(rows,{r['egrid']:r for r in crossings},report,cfg,version,slope_snapshot,contours,patrimoine['parcelles'] if patrimoine else None)
                 for egrid in missing:
                     incoming[egrid]=old[egrid]
                     fiches[egrid]=copy.deepcopy(old_fiches[egrid]);fiches[egrid]['version']=version
@@ -346,6 +394,7 @@ class UpdateService:
                     fiches[egrid]['derniere_version_observee']=old_fiches[egrid]['version']
                     fiches[egrid]['contraintes']=contraintes()
                     fiches[egrid]['alertes']=sorted(set(fiches[egrid]['alertes'])|{'absente_derniere_collecte_a_examiner'})
+                del old_fiches,old
                 if set(fiches)!=set(incoming):raise ValueError('Fiches incomplètes')
                 # Contours des parcelles absentes conservés uniquement pour la consultation historique.
                 if missing and (previous_folder/'contours.json').exists():
@@ -364,24 +413,36 @@ class UpdateService:
                     calculs={name:sha(ROOT/'code'/name) for name in ('classification.py','prospection.py','geometrie.py')},
                     collecte=sha(Path(__file__).with_name('collecte_application.py')) if self.base_collector else None,
                     sources={k:{field:info.get(field) for field in ('empreinte_contenu_sha256','empreinte_metadonnees_sha256')} for k,info in report['sources'].items()})
+                identity['mode_actualisation']=self.mode_actualisation
+                identity['patrimoine_geovd']=patrimoine['empreinte'] if patrimoine else None
+                identity['algorithme_patrimoine_geovd']=sha(Path(__file__).with_name('patrimoine_geovd.py')) if patrimoine else None
                 fingerprint=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
                 prior=json.loads((previous_folder/'manifest.json').read_text())
                 alerts=list(state.data.get('alertes',[]))+[f'{key} : {count} parcelle(s)' for key,count in report['alertes'].items()]
                 if missing:alerts.append(f'{len(missing)} parcelle(s) absentes conservées pour examen ; aucun archivage automatique')
                 bilan={'parcelles':len(fiches),'ajoutees':len(added),'absentes':len(missing),'croisements':report['bilan']}
+                bilan['perimetre']=self.mode_actualisation
+                if patrimoine:
+                    bilan.update(premiere_observation_geovd=patrimoine['premiere_observation'],
+                                 evolutions_notes_geovd=patrimoine['evolutions'])
                 if prior.get('empreinte')==fingerprint:
                     write_json(self.storage/'verification_sources.json',{'version':previous,'sources':report['sources']})
                     state.maj(statut='aucun_changement',etape=None,fin_utc=maintenant(),
                               version_active=previous,bilan=bilan,alertes=alerts)
                     return
                 manifest=dict(version=version,empreinte=fingerprint,identite=identity,regles=cfg,
-                              date_creation=maintenant(),source_croisements=str(destination.relative_to(stage)),
+                              date_creation=maintenant(),mode_actualisation=self.mode_actualisation,source_croisements=str(destination.relative_to(stage)),
                               bilan=bilan,alertes=alerts,precedente=previous)
-                write_json(stage/'fiches.json',fiches);write_json(stage/'parcelles.json',incoming)
+                write_json(stage/'fiches.json',fiches)
+                del fiches  # Libérer le candidat avant la relecture de contrôle sur Free.
+                write_json(stage/'parcelles.json',incoming)
                 write_json(stage/'manifest.json',manifest)
                 # Relire avant activation ; une erreur conserve le pointeur précédent.
                 verified=json.loads((stage/'fiches.json').read_text())
                 if set(verified)!=set(incoming):raise ValueError('Version candidate incohérente')
+                del verified
+                manifest['date_activation']=maintenant()
+                write_json(stage/'manifest.json',manifest)
                 state.maj(etape='Activation',bilan=bilan,alertes=alerts)
                 target=self.storage/version
                 os.rename(stage,target)

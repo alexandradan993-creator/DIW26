@@ -10,7 +10,7 @@ EXPERT_FIELDS = ('decision_conti', 'motif_conti', 'type_bati_valide',
                  'surface_plancher_verifiee_m2', 'pleine_terre_reglementaire_m2')
 
 
-def collecter(stage, etat, precedentes, _module=None):
+def collecter(stage, etat, precedentes, _module=None, geovd=False):
     module = _module
     if module is None:
         spec = importlib.util.spec_from_file_location('_collecteur_application', ROOT/'API/actualiser_pully.py')
@@ -18,6 +18,8 @@ def collecter(stage, etat, precedentes, _module=None):
         spec.loader.exec_module(module)
     from suivi_collecte import CollectionTimeout, SuiviCollecte
     transport = SuiviCollecte(etat, module.telecharger if _module is not None else None)
+    if geovd:
+        module.COUCHES_SIGIP = {}
     original_wfs = module.wfs_requete
     inventories = []
     contours = []
@@ -105,8 +107,24 @@ def collecter(stage, etat, precedentes, _module=None):
 
     module.telecharger = controle_transport
     module.wfs_requete = controle_wfs
-    etat.maj(etape='Récupération de la base GEO.vd et SIGIP', mode='application')
+    etat.maj(etape='Récupération GEO.vd' if geovd else 'Récupération de la base GEO.vd et SIGIP',
+             mode='geovd' if geovd else 'application')
     rows = module.construire(etat)
+    if geovd:
+        for row in rows:
+            prior = precedentes.get(row['egrid'], {})
+            for key in module.SCHEMA['colonnes']:
+                if key.startswith('sigip_'):
+                    value = prior.get(key)
+                    if key.endswith('_json') and isinstance(value,str):
+                        value = json.loads(value) if value else None
+                    row[key] = value
+            module.deriver(row)
+            if not prior:
+                for kind in ('batiment_existante','batiment_provisoire','site_existante','site_provisoire'):
+                    row['notes_'+kind+'_json'] = None
+                    row['presence_note_1_3_'+kind] = None
+        etat.alerte('Actualisation limitée à GEO.vd. Données SIGIP historiques conservées, non actualisées ; anciennes notes bloquantes conservées.')
     # Les inventaires sont relus : pas de publication d'un assemblage tronqué.
     for url, params, before in inventories:
         after = json.loads(transport(url, params, True)).get('objectIds')
@@ -128,3 +146,7 @@ def collecter(stage, etat, precedentes, _module=None):
         'verifie_utc':module.maintenant(), 'sources':etat.data['sources'],
         'urls':{'geovd':module.GEOVD,'sigip':module.SIGIP_WFS},
         'limite':'Dates des jeux non exposées : non déduites de la date de vérification.'},ensure_ascii=False),encoding='utf-8')
+
+
+def collecter_geovd(stage, etat, precedentes):
+    return collecter(stage,etat,precedentes,geovd=True)

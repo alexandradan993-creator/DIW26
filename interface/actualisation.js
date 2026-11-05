@@ -64,6 +64,7 @@
       document.getElementById('inlineSearch')?.dispatchEvent(new Event('input'));
     }
     banner.textContent = `${data.total.toLocaleString('fr-CH')} parcelles · ${next.length.toLocaleString('fr-CH')} affichées · version ${version} · notes personnelles conservées`;
+    if (data.actualisation?.mode === 'geovd') banner.textContent += ' · GEO.vd actualisé · SIGIP non actualisé';
     banner.title = version;
   }
 
@@ -73,13 +74,16 @@
     try {
       while (Date.now() < deadline) {
         const state = await api(`/actualisations/${encodeURIComponent(id)}`);
-        if (state.statut === 'erreur') throw new Error(state.erreur || 'Échec de l’actualisation.');
+        if (state.statut === 'erreur') {
+          status(`${state.erreur || 'Échec de l’actualisation.'}\nActualisation arrêtée. La dernière version affichée est conservée.`, false);
+          return;
+        }
         if (['termine', 'aucun_changement'].includes(state.statut)) {
           await reload();
           const alerts = state.alertes?.length ? `\nÀ signaler : ${state.alertes.join(' · ')}` : '';
           status((state.statut === 'aucun_changement'
             ? 'Vérification terminée : aucun changement des données.'
-            : 'Actualisation terminée. La Carte et la Liste utilisent la nouvelle version.') + alerts, false);
+            : (state.mode === 'geovd' ? 'Actualisation GEO.vd terminée. Données SIGIP non actualisées.' : 'Actualisation terminée. La Carte et la Liste utilisent la nouvelle version.')) + alerts, false);
           return;
         }
         status(`Actualisation en cours : ${state.etape || 'traitement serveur'}. Vous pouvez continuer à consulter la version active.`, true);
@@ -130,6 +134,26 @@
     const title = document.createElement('h3');
     title.textContent = 'Observations cantonales actualisées';
     section.append(title);
+    if (data?.patrimoine_geovd) {
+      const heritage = data.patrimoine_geovd;
+      const group = document.createElement('section'); group.className = 'parcelFacts';
+      const heading = document.createElement('h3'); heading.textContent = 'Notes patrimoniales GEO.vd'; group.append(heading);
+      for (const [key,label] of [['notes_batiments','Bâtiments recensés'],['notes_sites','Sites recensés']]) {
+        const line = document.createElement('p');
+        line.textContent = label + ' : ' + (!heritage.contour_exploitable ? 'À vérifier : contour inexploitable'
+          : heritage[key]?.length ? heritage[key].join(', ') : 'Aucune note rencontrée dans les couches consultées');
+        group.append(line);
+      }
+      const comparison = document.createElement('p');
+      comparison.textContent = heritage.evolution_notes == null ? 'Première observation GEO.vd : aucune évolution encore mesurable.'
+        : heritage.evolution_notes ? `Évolution depuis la précédente collecte GEO.vd. Notes précédentes — bâtiments : ${heritage.precedentes.notes_batiments.join(', ') || 'aucune rencontrée'} ; sites : ${heritage.precedentes.notes_sites.join(', ') || 'aucune rencontrée'}.`
+        : 'Notes inchangées depuis la précédente collecte GEO.vd.';
+      group.append(comparison);
+      const warning = document.createElement('p'); warning.textContent = 'Données SIGIP historiques non actualisées. Les anciennes notes bloquantes sont conservées.'; group.append(warning);
+      const source = document.createElement('small'); source.className = 'observationSource';
+      source.textContent = 'Sources : GEO.vd, couches 316 et 402. Vérification : ' + new Date(heritage.verifie_utc).toLocaleString('fr-CH',{timeZone:'Europe/Zurich'}); group.append(source);
+      container.append(group);
+    }
     if (!data) {
       const p = document.createElement('p');
       p.textContent = 'Fiche serveur indisponible : contraintes à vérifier.';
@@ -177,10 +201,32 @@
     section.append(dl); container.append(section);
   }
 
+  async function archives(container) {
+    const heading = document.createElement('h3'); heading.textContent = 'Archives des bases de données';
+    const info = document.createElement('p'); info.textContent = 'Sur Render Free, ces archives sont temporaires. Téléchargez-les pour les conserver. Les notes et dossiers personnels restent dans ce navigateur.';
+    const state = document.createElement('p'); state.setAttribute('role','status'); state.textContent = 'Chargement des archives…';
+    container.append(heading,info,state);
+    try {
+      const data = await api('/versions');
+      if (!container.isConnected) return;
+      state.textContent = data.versions.length ? '' : 'Aucune version archivée disponible.';
+      const list = document.createElement('ul');
+      for (const item of data.versions) {
+        const row = document.createElement('li');
+        const date = item.date ? new Date(item.date).toLocaleString('fr-CH',{timeZone:'Europe/Zurich',dateStyle:'short',timeStyle:'medium'}) : 'Date non disponible';
+        row.append(document.createTextNode(`${date} · ${item.active ? 'Base active' : 'Archive'} · ${item.mode === 'geovd' ? 'GEO.vd' : item.mode === 'initiale' ? 'Base initiale' : 'Collecte complète'} · `));
+        const link = document.createElement('a'); link.href = `/versions/${encodeURIComponent(item.version)}/archive.zip`; link.textContent = 'Télécharger la base (.zip)'; row.append(link);list.append(row);
+      }
+      container.append(list);
+    } catch (error) {
+      if (container.isConnected) state.textContent = `Archives indisponibles : ${error.message}. Rouvrez Dossiers pour réessayer.`;
+    }
+  }
+
   window.foncimoActualisation = {
     mount(button, label) {label.textContent = message;status(message, busy);},
     start,
-    fiche, contraintes
+    fiche, contraintes, archives
   };
   reload().catch(error => {
     banner.textContent = `Données serveur indisponibles : ${error.message}`;

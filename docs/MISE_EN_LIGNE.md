@@ -226,3 +226,30 @@ au lieu du seul positionnement de caméra `lon/lat/alt`. Le point de contrôle
 2540003.59 / 1151259.87 donne 412.79 m, conformément à la capture du prototype.
 Les versions déjà stockées bénéficient aussi de cet enrichissement à la lecture,
 sans migration de données. Un repère n'est pas un contour cadastral surligné.
+
+## Parcours Web GEO.vd uniquement
+
+Suite au choix utilisateur, `application_web.py` et le lanceur local utilisent
+`collecter_geovd`. L'adaptateur isole le collecteur d'équipe et désactive ses
+appels SIGIP sans modifier son fichier ni les critères. Les données SIGIP déjà
+présentes sont conservées et signalées comme historiques non actualisées.
+Les nouvelles parcelles ne reçoivent pas de faux zéros pour ces données absentes.
+
+Le patrimoine est téléchargé séparément depuis `vd.batiment_recense` (316) et
+`vd.site` (402), avec inventaires, lots et comptages vérifiés, en MN95. Les notes
+NOTE_CARTO/NOTE_DETAIL sont rattachées aux contours de cette version avec le seuil
+existant de 0,1 m². Toute note inconnue fait échouer le candidat. Les notes GEO.vd
+et leur comparaison sont archivées dans `patrimoine_geovd.json` et les fiches.
+Les anciennes notes bloquantes ne sont pas effacées. Le bilan indique le périmètre
+GEO.vd et distingue la première observation des évolutions réellement observées.
+
+Dans Dossiers, chaque version valide disponible est listée avec date et heure,
+périmètre et lien ZIP authentifié. Le ZIP contient tous les fichiers de cette
+version, dont parcelles, fiches, contours, manifeste et observations. Les notes
+personnelles du navigateur et annotations serveur séparées ne sont pas incluses.
+Sur Free, télécharger les ZIP avant une mise en veille/redéploiement pour les
+conserver ; aucune conservation durable n'est ajoutée sur Render.
+
+Un test réel peut être lancé une seule fois au démarrage durant une fenêtre
+explicite avec `FONCIMO_TEST_GEOVD_UNTIL` (époque UTC en secondes). En dehors de
+cette fenêtre, seul le bouton authentifié déclenche une actualisation.

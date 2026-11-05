@@ -80,3 +80,26 @@ provient du raster local swissALTI3D LN02 (2019/2021), échantillonné au point.
 Ce repère ne représente ni une hauteur de bâtiment ni une délimitation cadastrale
 surlignée. L'altitude reste inconnue hors couverture ; aucun zéro n'est inventé.
 L'enrichissement de la réponse API ne modifie pas les fichiers des versions.
+
+## Actualisation GEO.vd uniquement et archives
+
+Le parcours Web actualise désormais le cadastre, les bâtiments, les affectations,
+les adresses, les observations ISOS/dangers et les notes des bâtiments/sites
+recensés via GEO.vd. Aucun appel SIGIP n'est effectué par ce parcours. Les champs
+SIGIP déjà présents sont conservés comme historiques non actualisés, de même que
+les exclusions patrimoniales antérieures. Les nouvelles notes GEO.vd peuvent
+ajouter une exclusion selon les critères inchangés ; elles ne lèvent pas seules
+une ancienne exclusion SIGIP. Une première observation ne démontre aucune évolution.
+
+Les observations patrimoniales GEO.vd sont stockées séparément, par EGRID, avec
+les objets, notes, source et date de vérification. La comparaison se fait entre
+deux observations GEO.vd de la même application ; la date de collecte n'est pas
+une date de publication officielle. Carte et Liste utilisent la même version.
+
+Dossiers contient une section « Archives des bases de données », chargée via
+GET /versions, avec date/heure Europe/Zurich, périmètre, base active et lien ZIP.
+GET /versions/{version}/archive.zip exige la même authentification que les données.
+L'archive contient la version serveur, pas les notes du navigateur ni le mot de
+passe. Les échecs n'activent aucune base et ne créent pas d'archive visible ; une
+vérification sans changement ne duplique pas la base. Ces archives serveur restent
+temporaires sur Free ; le téléchargement permet une conservation par l'utilisateur.

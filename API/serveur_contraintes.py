@@ -31,8 +31,8 @@ def main():
     parser.add_argument('--stockage',type=Path)
     parser.add_argument('--origine-interface',action='append',default=[],help="origine précise du frontend de développement")
     args=parser.parse_args()
-    from collecte_application import collecter
-    service=UpdateService(args.stockage,args.reference,args.contours,base_collector=collecter)
+    from collecte_application import collecter_geovd
+    service=UpdateService(args.stockage,args.reference,args.contours,base_collector=collecter_geovd,mode_actualisation="geovd")
     for origin in args.origine_interface:
         parsed=urlsplit(origin)
         if parsed.scheme not in ('http','https') or not parsed.netloc or parsed.path or parsed.query or parsed.fragment:

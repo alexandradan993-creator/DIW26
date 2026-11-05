@@ -47,7 +47,7 @@ class SuiviCollecte:
 
     def publish(self, details, **values):
         details.update(values)
-        self.etat.maj(etape=f"{details['source']} · couche {details['couche']} · {details['action']} · {details['etat']}",
+        self.etat.maj(etape=f"{details['source']} · couche {details['couche']} · requête {details['requete']} · {details['action']} · {details['etat']}",
                       telechargement=dict(details),
                       progression_reseau=dict(requetes=self.number, octets_recus=self.bytes))
         print('Foncimo collecte '+json.dumps(dict(operation_id=self.etat.data.get('operation_id'), **details),

@@ -73,6 +73,23 @@ def create_app(service, origins=(), username=None, password=None):
                     return answer(200, body=(ROOT/'interface'/name).read_bytes(), content_type=mime+'; charset=utf-8')
                 if path == '/application/donnees':
                     return answer(200, service.interface(version))
+                if path == '/versions':
+                    return answer(200,service.versions())
+                if path.startswith('/versions/') and path.endswith('/archive.zip'):
+                    selected_version=path.split('/')[2]
+                    stream=service.archive(selected_version)
+                    size=stream.seek(0,2);stream.seek(0)
+                    start_response('200 OK',[('Content-Type','application/zip'),
+                        ('Content-Length',str(size)),('Cache-Control','no-store'),
+                        ('Content-Disposition',f'attachment; filename=foncimo-{selected_version}.zip')])
+                    def blocks():
+                        try:
+                            while True:
+                                chunk=stream.read(65536)
+                                if not chunk:break
+                                yield chunk
+                        finally:stream.close()
+                    return blocks()
                 if path == '/versions/active':
                     return answer(200, {'version': service.active()})
                 if path == '/actualisations/etat':
@@ -117,7 +134,7 @@ def create_app(service, origins=(), username=None, password=None):
 
 def main():
     from waitress import serve
-    from collecte_application import collecter
+    from collecte_application import collecter_geovd
     from service_contraintes import DEFAULT_REFERENCE, UpdateService
 
     password = os.environ.get('FONCIMO_PASSWORD', '')
@@ -126,13 +143,15 @@ def main():
         raise SystemExit('Configurer FONCIMO_USERNAME et FONCIMO_PASSWORD (16 caractères minimum) dans les secrets de l’hébergeur.')
     storage = Path(os.environ.get('FONCIMO_STORAGE', str(ROOT/'API/versions/web')))
     reference = Path(os.environ.get('FONCIMO_REFERENCE', str(DEFAULT_REFERENCE)))
-    service = UpdateService(storage=storage, reference=reference, base_collector=collecter)
+    service = UpdateService(storage=storage, reference=reference, base_collector=collecter_geovd,mode_actualisation="geovd")
     app = create_app(service, username=username, password=password)
     print('Foncimo prêt : interface et API, authentification activée.', flush=True)
     from diagnostic_sigip import autorise, verifier
-    if autorise(os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP'),os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP_UNTIL')):
+    if service.mode_actualisation!='geovd' and autorise(os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP'),os.environ.get('FONCIMO_DIAGNOSTIC_SIGIP_UNTIL')):
         import threading
         threading.Thread(target=verifier,name='diagnostic-sigip',daemon=True).start()
+    if autorise('1',os.environ.get('FONCIMO_TEST_GEOVD_UNTIL')):
+        service.start()
     # Une instance et un processus ; stockage temporaire sur Free.
     serve(app, host=os.environ.get('HOST', '0.0.0.0'), port=int(os.environ.get('PORT', '8000')),
           threads=8, max_request_body_size=2048, channel_timeout=30,
