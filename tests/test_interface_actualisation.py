@@ -66,7 +66,9 @@ class InterfaceTests(unittest.TestCase):
                 page.route('**/versions',versions)
                 page.goto(f'http://127.0.0.1:{server.server_address[1]}')
                 page.wait_for_function("document.querySelector('#applicationStatus').textContent.includes('2 parcelles')")
-                page.locator('[data-tab="data"]').click()
+                for tab in ('map','list','saved','data'):
+                    page.locator(f'[data-tab="{tab}"]').click()
+                    self.assertFalse(page.locator('#applicationStatus').is_visible())
                 page.locator('#refreshData').click()
                 page.wait_for_function("document.querySelector('#refreshStatus').textContent.includes('Actualisation terminée')")
                 active=fixture.service.active()

@@ -89,6 +89,7 @@
     banner.textContent = `${data.total.toLocaleString('fr-CH')} parcelles · ${next.length.toLocaleString('fr-CH')} affichées · version ${version} · notes personnelles conservées`;
     if (data.actualisation?.mode === 'geovd') banner.textContent += ' · GEO.vd actualisé · SIGIP non actualisé';
     banner.title = version;
+    banner.hidden = true;
     const archivePanel = document.getElementById('databaseArchives');
     if (archivePanel) await archives(archivePanel);
   }
@@ -149,6 +150,7 @@
       if (data.egrid !== egrid || data.version !== version) throw new Error('Version de fiche incohérente.');
       return data;
     } catch (error) {
+      banner.hidden = false;
       banner.textContent = `Fiche serveur indisponible : ${error.message}`;
       return null;
     }
@@ -257,6 +259,7 @@
     fiche, contraintes, archives
   };
   reload().catch(error => {
+    banner.hidden = false;
     banner.textContent = `Données serveur indisponibles : ${error.message}`;
     status(banner.textContent, false);
   });

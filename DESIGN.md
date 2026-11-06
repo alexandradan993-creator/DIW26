@@ -67,7 +67,8 @@ Sélecteurs existants natifs, popup gérée par le système. Pas de nouvelle bib
 
 Les couleurs viennent exclusivement de `criteres_category.py`. Le lac
 `CH298395274555` reste dans la base/API mais est masqué de la Carte et de la Liste,
-comme dans le prototype fourni ; le bandeau distingue le total et les lignes affichées.
+comme dans le prototype fourni. Le bandeau technique de bas de page est masqué
+sur toutes les vues ; les erreurs de chargement restent visibles sans fond jaune.
 
 La section des archives dans Données reprend le composant `.parcelFacts`, les
 liens natifs et les dates en français suisse. Les notes GEO.vd sont présentées
