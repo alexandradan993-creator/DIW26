@@ -2,6 +2,7 @@
 (() => {
   let version = null;
   let following = null;
+  const archiveRequests = new WeakMap();
   let busy = false;
   let message = 'Prêt à actualiser les données.';
   const banner = document.querySelector('#applicationStatus');
@@ -88,6 +89,8 @@
     banner.textContent = `${data.total.toLocaleString('fr-CH')} parcelles · ${next.length.toLocaleString('fr-CH')} affichées · version ${version} · notes personnelles conservées`;
     if (data.actualisation?.mode === 'geovd') banner.textContent += ' · GEO.vd actualisé · SIGIP non actualisé';
     banner.title = version;
+    const archivePanel = document.getElementById('databaseArchives');
+    if (archivePanel) await archives(archivePanel);
   }
 
   async function follow(id) {
@@ -225,13 +228,15 @@
   }
 
   async function archives(container) {
+    const request = {};
+    archiveRequests.set(container, request);
     const heading = document.createElement('h3'); heading.textContent = 'Archives des bases de données';
     const info = document.createElement('p'); info.textContent = 'Ces archives sont temporaires. Téléchargez-les pour les conserver. Les notes et dossiers personnels restent dans ce navigateur.';
     const state = document.createElement('p'); state.setAttribute('role','status'); state.textContent = 'Chargement des archives…';
-    container.append(heading,info,state);
+    container.replaceChildren(heading,info,state);
     try {
       const data = await api('/versions');
-      if (!container.isConnected) return;
+      if (!container.isConnected || archiveRequests.get(container) !== request) return;
       state.textContent = data.versions.length ? '' : 'Aucune version archivée disponible.';
       const list = document.createElement('ul');
       for (const item of data.versions) {
@@ -242,7 +247,7 @@
       }
       container.append(list);
     } catch (error) {
-      if (container.isConnected) state.textContent = `Archives indisponibles : ${error.message}. Rouvrez Données pour réessayer.`;
+      if (container.isConnected && archiveRequests.get(container) === request) state.textContent = `Archives indisponibles : ${error.message}. Rouvrez Données pour réessayer.`;
     }
   }
 

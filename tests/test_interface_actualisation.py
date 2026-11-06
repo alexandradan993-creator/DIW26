@@ -46,6 +46,43 @@ class InterfaceTests(unittest.TestCase):
         finally:
             server.shutdown();server.server_close();thread.join();fixture.tearDown()
 
+    def test_archives_refresh_after_activation_and_ignore_old_response(self):
+        from playwright.sync_api import sync_playwright
+        from test_service_contraintes import ServiceTests
+        from serveur_contraintes import make_server
+        fixture=ServiceTests();fixture.setUp()
+        initial=fixture.service.active()
+        server=make_server(fixture.service,port=0)
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with sync_playwright() as p:
+                browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+                page=browser.new_page(viewport={'width':390,'height':844})
+                pending=[];calls=[]
+                def versions(route):
+                    calls.append(route)
+                    if len(calls)==1:pending.append(route)
+                    else:route.continue_()
+                page.route('**/versions',versions)
+                page.goto(f'http://127.0.0.1:{server.server_address[1]}')
+                page.wait_for_function("document.querySelector('#applicationStatus').textContent.includes('2 parcelles')")
+                page.locator('[data-tab="data"]').click()
+                page.locator('#refreshData').click()
+                page.wait_for_function("document.querySelector('#refreshStatus').textContent.includes('Actualisation terminée')")
+                active=fixture.service.active()
+                self.assertNotEqual(active,initial)
+                links=page.locator('#databaseArchives a')
+                self.assertEqual(links.count(),2)
+                self.assertIn(active,links.first.get_attribute('href'))
+                pending[0].fulfill(json={'versions':[{'version':initial,'active':True,'mode':'initiale'}]})
+                page.wait_for_timeout(200)
+                self.assertEqual(links.count(),2)
+                self.assertIn(active,links.first.get_attribute('href'))
+                self.assertEqual(page.locator('#databaseArchives h3').count(),1)
+                browser.close()
+        finally:
+            server.shutdown();server.server_close();thread.join();fixture.tearDown()
+
     def test_refresh_and_failure_keep_same_version(self):
         from playwright.sync_api import sync_playwright
         from test_service_contraintes import ServiceTests

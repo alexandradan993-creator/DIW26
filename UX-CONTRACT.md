@@ -109,3 +109,7 @@ une réponse HTML temporaire. Une demande POST d’actualisation n’est jamais 
 automatiquement : le prochain clic retrouve d’abord l’état serveur. Les fiches sont
 lues individuellement avec un cache borné ; les accès simultanés ne chargent pas
 plusieurs copies de la base complète.
+
+Après une actualisation réussie, la section des archives ouverte dans Données
+se recharge automatiquement. Son contenu est remplacé sans doublon ; une réponse
+plus ancienne ne peut pas remplacer la liste de la nouvelle version.
